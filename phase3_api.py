@@ -397,17 +397,18 @@ def root():
 <title>xFG% Shot Predictor</title>
 <style>
 :root {{
-  --bg:     #0d1117;
-  --panel:  #161b22;
-  --card:   #1a2030;
-  --border: #2a3348;
-  --gold:   #f0a500;
-  --gold2:  #fbbf24;
-  --muted:  #6b7280;
-  --text:   #dde1f0;
-  --red:    #f87171;
-  --green:  #4ade80;
-  --radius: 12px;
+  --bg:     #f5f5f5;
+  --panel:  #ebebeb;
+  --card:   #ffffff;
+  --border: #e0e0e0;
+  --shadow: rgba(0,0,0,.07);
+  --gold:   #e8a200;
+  --gold2:  #f5b520;
+  --muted:  #9e9e9e;
+  --text:   #1a1a1a;
+  --red:    #d32f2f;
+  --green:  #2e7d32;
+  --radius: 10px;
 }}
 
 *, *::before, *::after {{
@@ -417,15 +418,16 @@ def root():
 }}
 
 body {{
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  padding: 28px 16px 64px;
+  padding: 32px 20px 72px;
+  -webkit-font-smoothing: antialiased;
 }}
 
 .page {{
-  max-width: 840px;
+  max-width: 980px;
   margin: 0 auto;
 }}
 
@@ -435,46 +437,51 @@ body {{
   align-items: center;
   gap: 14px;
   margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
 }}
 
 .header-title {{
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: -.02em;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--text);
 }}
 
 .header-sub {{
-  font-size: .78rem;
+  font-size: .76rem;
   color: var(--muted);
   margin-top: 2px;
 }}
 
 .model-badge {{
   margin-left: auto;
-  background: var(--panel);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 14px;
-  font-size: .78rem;
+  font-size: .76rem;
   line-height: 1.6;
   text-align: right;
+  box-shadow: 0 1px 3px var(--shadow);
 }}
 
 .model-badge strong {{
   color: var(--gold);
   display: block;
-  font-size: .9rem;
+  font-size: .88rem;
+  font-weight: 700;
 }}
 
 /* ── Layout grid ── */
 .grid {{
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 440px 1fr;
   gap: 20px;
   align-items: start;
 }}
 
-@media (max-width: 660px) {{
+@media (max-width: 760px) {{
   .grid {{ grid-template-columns: 1fr; }}
 }}
 
@@ -484,11 +491,12 @@ body {{
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
+  box-shadow: 0 1px 4px var(--shadow);
 }}
 
 .card-label {{
-  font-size: .68rem;
-  font-weight: 700;
+  font-size: .66rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .1em;
   color: var(--muted);
@@ -497,7 +505,7 @@ body {{
 
 /* ── Court ── */
 .court-card {{
-  padding: 14px;
+  padding: 12px;
   cursor: crosshair;
 }}
 
@@ -505,11 +513,11 @@ body {{
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: 6px;
 }}
 
 .court-hint {{
-  font-size: .7rem;
+  font-size: .68rem;
   color: var(--muted);
   text-align: center;
   margin-top: 8px;
@@ -519,7 +527,7 @@ body {{
 .right-col {{
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }}
 
 /* ── Player search ── */
@@ -532,22 +540,22 @@ body {{
   padding: 9px 12px 9px 34px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   color: var(--text);
   font-size: .9rem;
   outline: none;
-  transition: border-color .2s;
+  transition: border-color .15s;
 }}
 
 .search-input::placeholder {{ color: var(--muted); }}
-.search-input:focus {{ border-color: var(--gold); }}
+.search-input:focus {{ border-color: var(--gold); background: var(--card); }}
 
 .search-icon {{
   position: absolute;
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: .9rem;
+  font-size: .85rem;
   color: var(--muted);
   pointer-events: none;
 }}
@@ -557,10 +565,10 @@ body {{
   z-index: 50;
   width: 100%;
   top: calc(100% + 4px);
-  background: var(--panel);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
   overflow: hidden;
   display: none;
 }}
@@ -572,11 +580,12 @@ body {{
   cursor: pointer;
   font-size: .88rem;
   border-bottom: 1px solid var(--border);
-  transition: background .15s;
+  transition: background .12s;
+  color: var(--text);
 }}
 
 .dd-item:last-child {{ border-bottom: none; }}
-.dd-item:hover {{ background: var(--card); color: var(--gold); }}
+.dd-item:hover {{ background: var(--panel); color: var(--gold); }}
 
 .retrain-row {{
   margin-top: 10px;
@@ -591,20 +600,20 @@ body {{
   flex: 1;
   padding: 8px 12px;
   font-size: .83rem;
-  font-weight: 700;
+  font-weight: 600;
   background: var(--gold);
-  color: #111318;
+  color: #fff;
   border: none;
   border-radius: 7px;
   cursor: pointer;
-  transition: background .2s;
+  transition: background .15s;
 }}
 
 .retrain-btn:hover {{ background: var(--gold2); }}
-.retrain-btn:disabled {{ background: #374151; color: var(--muted); cursor: not-allowed; }}
+.retrain-btn:disabled {{ background: #ccc; color: #fff; cursor: not-allowed; }}
 
 .retrain-status {{
-  font-size: .75rem;
+  font-size: .74rem;
   color: var(--muted);
   margin-top: 6px;
   min-height: 16px;
@@ -614,7 +623,7 @@ body {{
   display: inline-block;
   width: 11px;
   height: 11px;
-  border: 2px solid #374151;
+  border: 2px solid var(--border);
   border-top-color: var(--gold);
   border-radius: 50%;
   animation: spin .6s linear infinite;
@@ -634,11 +643,12 @@ body {{
 
 .info-field label {{
   display: block;
-  font-size: .68rem;
+  font-size: .66rem;
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--muted);
   margin-bottom: 4px;
+  font-weight: 600;
 }}
 
 .info-field input {{
@@ -646,14 +656,14 @@ body {{
   padding: 8px 10px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 6px;
   color: var(--text);
   font-size: .9rem;
   outline: none;
-  transition: border-color .2s;
+  transition: border-color .15s;
 }}
 
-.info-field input:focus {{ border-color: var(--gold); }}
+.info-field input:focus {{ border-color: var(--gold); background: var(--card); }}
 
 /* ── Shot type toggle ── */
 .type-toggle {{
@@ -665,21 +675,21 @@ body {{
 .type-btn {{
   flex: 1;
   padding: 8px;
-  font-size: .85rem;
+  font-size: .84rem;
   font-weight: 600;
   background: var(--panel);
   border: 1.5px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   color: var(--muted);
   cursor: pointer;
-  transition: all .18s;
+  transition: all .15s;
   text-align: center;
 }}
 
 .type-btn.active {{
   border-color: var(--gold);
   color: var(--gold);
-  background: rgba(240,165,0,.1);
+  background: #fff8ec;
 }}
 
 .type-btn.hidden {{ display: none; }}
@@ -688,15 +698,15 @@ body {{
 .predict-btn {{
   width: 100%;
   padding: 11px;
-  font-size: .95rem;
-  font-weight: 800;
+  font-size: .92rem;
+  font-weight: 700;
   background: var(--gold);
-  color: #111318;
+  color: #fff;
   border: none;
-  border-radius: 9px;
+  border-radius: 8px;
   cursor: pointer;
   letter-spacing: .01em;
-  transition: background .2s, transform .1s;
+  transition: background .15s, transform .1s;
 }}
 
 .predict-btn:hover  {{ background: var(--gold2); }}
@@ -731,16 +741,16 @@ body {{
 
 .gauge-num {{
   font-size: 2rem;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1;
 }}
 
 .gauge-sub {{
-  font-size: .65rem;
+  font-size: .62rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: .1em;
-  margin-top: 2px;
+  margin-top: 3px;
 }}
 
 .result-stats {{
@@ -752,21 +762,23 @@ body {{
 
 .rstat {{
   background: var(--panel);
-  border-radius: 8px;
+  border-radius: 7px;
   padding: 10px 12px;
 }}
 
 .rstat .k {{
-  font-size: .65rem;
+  font-size: .62rem;
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--muted);
+  font-weight: 600;
 }}
 
 .rstat .v {{
   font-size: .9rem;
   font-weight: 700;
   margin-top: 3px;
+  color: var(--text);
 }}
 
 .model-pills {{
@@ -777,7 +789,7 @@ body {{
 }}
 
 .mpill {{
-  font-size: .72rem;
+  font-size: .7rem;
   padding: 3px 10px;
   border-radius: 99px;
   background: var(--panel);
@@ -806,7 +818,7 @@ body {{
 }}
 
 .ft-popup .ft-sub {{
-  font-size: .75rem;
+  font-size: .74rem;
   color: var(--muted);
   margin-top: 2px;
 }}
@@ -814,7 +826,7 @@ body {{
 /* ── Error ── */
 .err {{
   color: var(--red);
-  font-size: .8rem;
+  font-size: .78rem;
   margin-top: 8px;
 }}
 </style>
@@ -855,70 +867,96 @@ body {{
       -->
       <svg id="court-svg" viewBox="0 0 300 295" xmlns="http://www.w3.org/2000/svg">
 
-        <!-- Court surface -->
-        <rect width="300" height="295" fill="#152032" rx="8"/>
+        <!-- Court surface (warm hardwood) -->
+        <rect width="300" height="295" fill="#c8985c" rx="8"/>
+
+        <!-- Wood grain lines (subtle) -->
+        <line x1="0" y1="49"  x2="300" y2="49"  stroke="rgba(0,0,0,.04)" stroke-width="1"/>
+        <line x1="0" y1="98"  x2="300" y2="98"  stroke="rgba(0,0,0,.04)" stroke-width="1"/>
+        <line x1="0" y1="147" x2="300" y2="147" stroke="rgba(0,0,0,.04)" stroke-width="1"/>
+        <line x1="0" y1="196" x2="300" y2="196" stroke="rgba(0,0,0,.04)" stroke-width="1"/>
+        <line x1="0" y1="245" x2="300" y2="245" stroke="rgba(0,0,0,.04)" stroke-width="1"/>
 
         <!-- Boundary -->
         <rect x="6" y="6" width="288" height="283"
-              fill="none" stroke="#1e3a5a" stroke-width="1.5" rx="6"/>
+              fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.8" rx="4"/>
+
+        <!-- Half-court line -->
+        <line x1="6" y1="289" x2="294" y2="289"
+              stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
 
         <!-- Paint fill -->
-        <rect x="106" y="22" width="88" height="104.5"
-              fill="rgba(240,165,0,.05)" stroke="#1e3a5a" stroke-width="1.2"/>
+        <rect x="106" y="6" width="88" height="120.5"
+              fill="rgba(60,30,0,.12)" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>
+
+        <!-- FT line -->
+        <line x1="106" y1="126.5" x2="194" y2="126.5"
+              stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>
 
         <!-- FT circle upper (solid) -->
         <path d="M 117,126.5 A 33,33 0 0,1 183,126.5"
-              fill="none" stroke="#1e3a5a" stroke-width="1.2"/>
+              fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.3"/>
 
         <!-- FT circle lower (dashed) -->
         <path d="M 117,126.5 A 33,33 0 0,0 183,126.5"
-              fill="none" stroke="#1e3a5a" stroke-width="1.2" stroke-dasharray="4 3"/>
+              fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.3" stroke-dasharray="4 3"/>
 
         <!-- Restricted arc -->
         <path d="M 128,22 A 22,22 0 0,1 172,22"
-              fill="none" stroke="#1e3a5a" stroke-width="1.2"/>
+              fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.3"/>
 
-        <!-- THREE-POINT LINE (gold) -->
-        <line x1="29" y1="6" x2="29" y2="71.2" stroke="#f0a500" stroke-width="2"/>
-        <line x1="271" y1="6" x2="271" y2="71.2" stroke="#f0a500" stroke-width="2"/>
-        <path d="M 29,71.2 A 130.6,130.6 0 0,1 271,71.2"
-              fill="none" stroke="#f0a500" stroke-width="2"/>
+        <!--
+          THREE-POINT LINE
+          Corner lines: x=29 (left) and x=271 (right), from baseline (y=6) to arc-join (y=71.2)
+          Arc: radius=130.6 centred at basket (150,22).
+          To avoid SVG arc ambiguity we split into two half-arcs via the explicit
+          bottom-most midpoint at (150, 152.6):
+            left-half : (29,71.2)  → (150,152.6)  sweep=0,large=0
+            right-half: (150,152.6)→ (271,71.2)   sweep=0,large=0
+        -->
+        <line x1="29" y1="6" x2="29" y2="71.2"
+              stroke="#1a1a1a" stroke-width="2.2"/>
+        <line x1="271" y1="6" x2="271" y2="71.2"
+              stroke="#1a1a1a" stroke-width="2.2"/>
+        <path d="M 29,71.2 A 130.6,130.6 0 0,0 150,152.6
+                           A 130.6,130.6 0 0,0 271,71.2"
+              fill="none" stroke="#1a1a1a" stroke-width="2.2"/>
 
         <!-- Backboard -->
-        <rect x="133" y="14" width="34" height="3"
-              fill="none" stroke="#f0a500" stroke-width="2"/>
+        <rect x="133" y="13" width="34" height="3.5"
+              fill="rgba(0,0,0,.5)" stroke="rgba(0,0,0,.7)" stroke-width="1"/>
 
         <!-- Basket ring -->
-        <circle cx="150" cy="22" r="5"
-                fill="none" stroke="#f0a500" stroke-width="2"/>
+        <circle cx="150" cy="22" r="5.5"
+                fill="none" stroke="rgba(0,0,0,.6)" stroke-width="2"/>
 
         <!-- Zone labels -->
-        <text x="150" y="105" text-anchor="middle"
-              font-size="7.5" fill="#1e3a5a" font-weight="600" letter-spacing="1">MID-RANGE</text>
-        <text x="150" y="185" text-anchor="middle"
-              font-size="7.5" fill="#1e3a5a" font-weight="600" letter-spacing="1">THREE-POINT</text>
+        <text x="150" y="108" text-anchor="middle"
+              font-size="7" fill="rgba(0,0,0,.3)" font-weight="700" letter-spacing="1.2">MID-RANGE</text>
+        <text x="150" y="190" text-anchor="middle"
+              font-size="7" fill="rgba(0,0,0,.3)" font-weight="700" letter-spacing="1.2">THREE-POINT</text>
 
-        <!-- FT% button on the free throw line -->
-        <g id="ft-btn" style="cursor:pointer" onclick="fetchFTPct()">
-          <rect x="122" y="120" width="56" height="15" rx="7.5"
-                fill="#152032" stroke="#f0a500" stroke-width="1.5"/>
+        <!-- FT% button -->
+        <g id="ft-btn" style="cursor:pointer">
+          <rect x="118" y="119" width="64" height="16" rx="8"
+                fill="rgba(255,255,255,.85)" stroke="#e8a200" stroke-width="1.8"/>
           <text x="150" y="131" text-anchor="middle"
-                font-size="8" font-weight="700" fill="#f0a500"
+                font-size="8" font-weight="700" fill="#e8a200"
                 style="pointer-events:none">FT %</text>
         </g>
 
         <!-- Shot dot -->
         <circle id="shot-dot" cx="150" cy="22" r="6"
-                fill="#f0a500" fill-opacity="0"
-                stroke="#fff" stroke-width="1.5"
-                style="filter:drop-shadow(0 0 5px rgba(240,165,0,.9));transition:cx .15s,cy .15s"/>
+                fill="#e8a200" fill-opacity="0"
+                stroke="#fff" stroke-width="2"
+                style="filter:drop-shadow(0 0 5px rgba(232,162,0,.9));transition:cx .15s,cy .15s"/>
 
         <!-- Ripple ring -->
         <circle id="shot-ripple" cx="150" cy="22" r="6"
-                fill="none" stroke="#f0a500" stroke-opacity="0" stroke-width="1"/>
+                fill="none" stroke="#e8a200" stroke-opacity="0" stroke-width="1.5"/>
       </svg>
 
-      <div class="court-hint">Basket &#8593; &nbsp;&middot;&nbsp; Gold line = 3-point arc &nbsp;&middot;&nbsp; Click FT% for free throw stats</div>
+      <div class="court-hint">Basket &#8593; &nbsp;&middot;&nbsp; Black arc = 3-point line &nbsp;&middot;&nbsp; Click FT% for free throw stats</div>
     </div>
 
     <!-- RIGHT — Controls -->
@@ -979,10 +1017,10 @@ body {{
         <div class="gauge-wrap">
           <svg width="170" height="105" viewBox="0 0 170 105">
             <path d="M 15,95 A 70,70 0 0,1 155,95"
-                  fill="none" stroke="#1e2a3a" stroke-width="16" stroke-linecap="round"/>
+                  fill="none" stroke="#e8e8e8" stroke-width="16" stroke-linecap="round"/>
             <path id="gauge-arc"
                   d="M 15,95 A 70,70 0 0,1 155,95"
-                  fill="none" stroke="#f0a500" stroke-width="16" stroke-linecap="round"
+                  fill="none" stroke="#e8a200" stroke-width="16" stroke-linecap="round"
                   stroke-dasharray="220" stroke-dashoffset="220"
                   style="transition:stroke-dashoffset .7s ease,stroke .4s"/>
           </svg>
@@ -1048,10 +1086,16 @@ let selectedType   = "2pt";
 let selectedPlayer = null;
 let retrainPoll    = null;
 
-/* ── Court click ── */
+/* ── Court elements ── */
 const courtSvg  = document.getElementById("court-svg");
 const dot       = document.getElementById("shot-dot");
 const ripple    = document.getElementById("shot-ripple");
+
+/* Wire FT% button via JS (SVG onclick attributes are unreliable) */
+document.getElementById("ft-btn").addEventListener("click", function(e) {{
+  e.stopPropagation();
+  fetchFTPct();
+}});
 
 courtSvg.addEventListener("click", function(e) {{
   if (e.target.closest("#ft-btn")) return;
@@ -1273,9 +1317,9 @@ function doPredikt() {{
 }}
 
 function resultColor(pct) {{
-  if (pct < 0.35) return "#f87171";
-  if (pct < 0.50) return "#f0a500";
-  return "#4ade80";
+  if (pct < 0.35) return "#d32f2f";
+  if (pct < 0.50) return "#e8a200";
+  return "#2e7d32";
 }}
 
 function showResult(d) {{
