@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="404" viewBox="0 0 860 404" role="img" aria-label="Final-test zone calibration gaps">
+<rect width="860" height="404" fill="white"/>
+<g fill="#0f172a" font-family="sans-serif">
+<text x="25" y="33" font-size="21">Final-test zone calibration gaps</text>
+<text x="25" y="57" font-size="12">Mean predicted probability minus observed make rate; sparse zones are noisy.</text>
+<text x="25" y="107" font-size="13">Above the Break 3 (n=159)</text>
+<rect x="560" y="90" width="10.658473842554937" height="25" fill="#0891b2"/>
+<text x="800" y="107" font-size="12">+0.014</text>
+<text x="25" y="151" font-size="13">Left Corner 3 (n=11)</text>
+<rect x="551.6123173206145" y="134" width="8.387682679385492" height="25" fill="#ea580c"/>
+<text x="800" y="151" font-size="12">-0.011</text>
+<text x="25" y="195" font-size="13">Mid-Range (n=37)</text>
+<rect x="560" y="178" width="122.60824250910677" height="25" fill="#0891b2"/>
+<text x="800" y="195" font-size="12">+0.161</text>
+<text x="25" y="239" font-size="13">Paint (Non-RA) (n=43)</text>
+<rect x="560" y="222" width="28.496834298976395" height="25" fill="#0891b2"/>
+<text x="800" y="239" font-size="12">+0.037</text>
+<text x="25" y="283" font-size="13">Restricted Area (n=44)</text>
+<rect x="515.8232652656388" y="266" width="44.176734734361204" height="25" fill="#ea580c"/>
+<text x="800" y="283" font-size="12">-0.058</text>
+<text x="25" y="327" font-size="13">Right Corner 3 (n=5)</text>
+<rect x="340.0" y="310" width="220.0" height="25" fill="#ea580c"/>
+<text x="800" y="327" font-size="12">-0.288</text>
+<path d="M560 80V374" stroke="#94a3b8"/>
+</g></svg>

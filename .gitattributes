@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.joblib binary
+*.png binary
+models/** -text whitespace=cr-at-eol
+docs/evidence/** -text whitespace=cr-at-eol

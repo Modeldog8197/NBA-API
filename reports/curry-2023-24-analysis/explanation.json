@@ -1,0 +1,66 @@
+{
+  "model_id": "p201939-2023-24-20260905T184018153423Z-fe3743c6",
+  "loc_x": 230.0,
+  "loc_y": 20.0,
+  "distance_ft": 23.08679276123039,
+  "shot_value": 3,
+  "shot_type": "3pt",
+  "shot_zone": "Right Corner 3",
+  "make_probability": 0.5541079161133049,
+  "expected_points": 1.6623237483399147,
+  "uncertainty": null,
+  "uncertainty_note": "An evaluated statistical uncertainty interval is unavailable. This is a model probability, not a confidence interval.",
+  "explanation": {
+    "method": "TreeSHAP (XGBoost native, tree-path-dependent)",
+    "units": "raw log-odds",
+    "base_value": -0.15943506360054016,
+    "raw_margin": 0.2172825038433075,
+    "contributions": [
+      {
+        "feature": "LOC_X",
+        "label": "Horizontal location",
+        "value": -0.018584128469228745,
+        "feature_value": 230.0
+      },
+      {
+        "feature": "LOC_Y",
+        "label": "Distance toward midcourt",
+        "value": 0.00014733360148966312,
+        "feature_value": 20.0
+      },
+      {
+        "feature": "SHOT_DISTANCE",
+        "label": "Distance from basket",
+        "value": 0.28019651770591736,
+        "feature_value": 23.08679276123039
+      },
+      {
+        "feature": "SHOT_TYPE_ENC",
+        "label": "Two- or three-point location",
+        "value": 0.0,
+        "feature_value": 1.0
+      },
+      {
+        "feature": "SHOT_ANGLE",
+        "label": "Side and angle",
+        "value": 0.16036278009414673,
+        "feature_value": 1.4840579881189115
+      },
+      {
+        "feature": "SHOT_ANGLE_ABS",
+        "label": "Angle from the center",
+        "value": -0.04540495574474335,
+        "feature_value": 1.4840579881189115
+      }
+    ],
+    "reconstruction_error": 0.0,
+    "calibration": {
+      "method": "none",
+      "slope": 1.0,
+      "intercept": 0.0
+    },
+    "calibrated_log_odds": 0.2172825038433075,
+    "reconstructed_probability": 0.5541079161133049,
+    "note": "The base value plus feature contributions reconstructs the raw model log-odds. Probability = sigmoid(slope \u00d7 raw log-odds + intercept). Contributions describe this model, are not percentage-point changes, and are not causal advice. Correlated location features can share attribution."
+  }
+}
