@@ -2,17 +2,24 @@
 
 Verified locally on Windows with Python 3.12 and the exact dependency snapshot in `requirements-lock.txt`. The automated and multi-player preparation results below were updated on 2026-09-06.
 
-- **145 Python tests passed.** NBA requests are mocked in automated tests. The only warnings are two upstream Starlette/httpx/AnyIO deprecation warnings.
+- **159 Python tests passed.** NBA requests are mocked in automated tests. The only warnings are two upstream Starlette/httpx/AnyIO deprecation warnings.
 - `python -m pip check`: no broken requirements.
 - Python fatal-error static checks passed.
 - `node scripts/test_dashboard.cjs` passed: contribution and evaluation/calibration rendering, stale model/season/prediction responses after selection changes, hosted-key preparation, and recovery from an unavailable player model.
 - Preparation tests cover simultaneous duplicate requests, separate player and season identities, validated saved-model reuse, corrupt or synthetic bundle rejection, unavailable career seasons, insufficient samples, explicit retries, an eight-job queue limit, bounded history, shutdown, and shared training-lock ownership. A test uses the actual trainer to reject a small sample and then prepare successfully after more mocked data is supplied.
 - Local authorization tests cover the loopback session token and reject remote clients, nonlocal Host values, cross-origin requests, and missing or invalid local tokens. Hosted preparation remains protected by the configured Bearer key; ordinary settings and the application factory disable local preparation by default.
-- Browser verified: initial empty-model state, loaded Curry model, corner-three classification and expected points, 380-location probability heatmap, TreeSHAP contributions and reconstruction indicator, keyboard movement, and responsive layout at 390 pixels.
+- Browser verified: initial empty-model state, loaded Curry model, corner-three classification and expected points, TreeSHAP contributions and reconstruction indicator, keyboard movement, and responsive layout at 390 pixels. The previous prediction grid has been replaced by the observed density map described below.
 - Revised interface verified in the browser: neutral/blue desktop layout, actual player-season choices, saved Luka predictions and free throws, and the mobile navigation, controls, and heatmap at a 390-pixel viewport with no horizontal page overflow. Asset versions prevent the previous dashboard styles and script from remaining cached after the update.
 - Real NBA retrieval: 1,445 Curry shots from 2023–24; 1,443 retained after excluding two heaves. The complete split and measured comparisons are in [EVALUATION.md](EVALUATION.md).
 - Real historical free throws: 299 makes / 324 attempts in 2023–24 (92.3% when rounded), retrieved through PlayerCareerStats. This statistic is separate from predictions.
 - Live model training, synthetic demo CLI, and phase 2 analysis completed. Published test metrics independently recomputed from the saved CSV agree to floating-point precision (maximum difference `1.11e-16`).
+
+## Shot chart accuracy
+
+- The red density map counts actual makes and misses in 2.5-foot cells, normalizes the shorter boundary cells by area, and does not color empty cells. No predictions or smoothing are used for density.
+- Independent raw-record comparison for Curry 2023–24: 650 makes / 1,445 attempts, FG% 44.9826989619%; 1,443 shots in 221 occupied half-court cells. The remaining two attempts are outside the half court. All zone attempt counts sum to 1,445; cell counts sum to 1,443.
+- Tests cover total-count weighting, duplicate event IDs, conflicting copies, invalid outcomes, non-attempts, missing locations, heaves, exact court boundaries, zero-attempt zones, and player/season identity. Dashboard checks cover stale shot-chart and old-location responses, changing season totals, immediate data clearing, error recovery, and red cell placement.
+- Browser check with Brunson 2022–23: overall 587 / 1,195 (49.1%), restricted area 116 / 207 (56.0%), left corner 13 / 23 (56.5%). Moving the marker updates observed zone FG%; the selected constant model remains explicitly labeled at 47.2%, preserving its measured behavior.
 
 ## Real multi-player preparation
 

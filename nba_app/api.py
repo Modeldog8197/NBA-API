@@ -24,6 +24,7 @@ from .data import DataUnavailableError, NBADataClient
 from .models import MODEL_ID_RE, ModelStore, ModelValidationError
 from .training import train_bundle
 from .preparation import ModelPreparationService, PreparationBusyError
+from .shot_chart import summarize_shots
 
 log = logging.getLogger(__name__)
 
@@ -199,7 +200,7 @@ def create_app(settings: Settings | None = None, data_client=None, store=None) -
         yield
         preparation.close(wait=False)
 
-    app = FastAPI(title="NBA API", version="4.1.0", lifespan=lifespan, description=(
+    app = FastAPI(title="NBA API", version="4.2.0", lifespan=lifespan, description=(
         "Basketball shot probabilities with immutable player-season model versions. "
         "Coordinates use tenths of a foot, with the hoop at the origin."
     ))
@@ -351,6 +352,17 @@ def create_app(settings: Settings | None = None, data_client=None, store=None) -
             raise HTTPException(422, str(exc)) from exc
         except LookupError as exc:
             raise HTTPException(404, str(exc)) from exc
+
+    @app.get("/player/shot-chart")
+    def shot_chart(player_id: int = Query(gt=0), season: str = Query()):
+        try:
+            validate_season(season)
+            player = client.resolve_player(player_id)
+            frame, provenance = client.fetch_shots(player_id, season)
+            return {"player_id": player_id, "player_name": player["name"], "season": season,
+                    "provenance": provenance, **summarize_shots(frame, player_id)}
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
 
     def predictions(model_id, shots, explain):
         bundle = load_bundle(model_id)

@@ -71,5 +71,62 @@ assert.match(textOf(nodes.get('evaluation-content')), /CALIBRATION/);
   await waitingForSeasons;
   assert.equal(run('state.season'), '2024-25', 'A late season lookup must not change the new player season');
   assert.equal(run('state.player.id'), 84);
-  console.log('Dashboard checks passed: rendering, calibration, stale predictions/models/seasons, hosted access, and unavailable-data recovery.');
+  const chart = {
+    player_id:84,season:'2024-25',overall:{made:3,attempts:10,fg_pct:.3},plotted:{attempts:10},
+    geometry:{corner_x:220,arc_join_y:Math.sqrt(237.5**2-220**2),arc_radius:237.5,restricted_radius:40,paint_half_width:80,paint_end_y:137.5},
+    zones:[{name:'Restricted Area',made:2,attempts:3,fg_pct:2/3},{name:'Left Corner 3',made:1,attempts:7,fg_pct:1/7},
+      {name:'Right Corner 3',made:0,attempts:0,fg_pct:null}],
+    cells:[{loc_x:-250,loc_y:-52.5,width:25,height:25,made:0,attempts:2,fg_pct:0,intensity:1,attempts_per_sq_ft:.32}],
+    max_density:.32,excluded:{invalid_rows:0,duplicate_rows:0,conflicting_rows:0},provenance:{stale:false},
+  };
+  context.chartFixture = chart;
+  run(`state.model=null;state.shotChart=chartFixture;state.location={x:0,y:20};renderShootingStats();drawHeatmap(chartFixture);`);
+  assert.equal(nodes.get('overall-fg').textContent, '30.0%');
+  assert.equal(nodes.get('zone-fg').textContent, '66.7%');
+  run(`moveShot(-230,0)`);
+  assert.equal(nodes.get('zone-fg').textContent, '14.3%', 'Zone percentage changes with selected location even without a model');
+  assert.equal(nodes.get('overall-fg').textContent, '30.0%', 'Location does not incorrectly filter the overall season denominator');
+  run(`moveShot(230,0)`);
+  assert.equal(nodes.get('zone-fg').textContent, '—', 'Empty zones are not rendered as 0%');
+  assert.match(nodes.get('zone-fg-counts').textContent, /No recorded attempts/);
+  assert.equal(nodes.get('heatmap-cells').children[0].children.length, 1, 'Only occupied density cells are colored');
+  assert.equal(nodes.get('heatmap-cells').children[0].children[0].attributes.fill, 'rgb(153 0 13)');
+  assert.equal(nodes.get('heatmap-cells').children[0].children[0].attributes.x, '50');
+
+  for (const [x,y,zone] of [[220,0,'Mid-Range'],[0,40,'Restricted Area'],[0,41,'Paint (Non-RA)'],
+    [80,137.5,'Paint (Non-RA)'],[0,237.5,'Mid-Range'],[0,237.5001,'Above the Break 3']]) {
+    run(`state.location={x:${x},y:${y}}`);
+    assert.equal(run('selectedShotZone(chartFixture.geometry)'), zone);
+  }
+
+  let finishChart;
+  context.fetch = () => new Promise(resolve => { finishChart = resolve; });
+  const oldChart = run('loadShotChart()');
+  assert.equal(nodes.get('overall-fg').textContent, '—', 'A reload clears previous counts immediately');
+  run(`invalidateSelection();state.season='2023-24';`);
+  finishChart({ok:true,json:async()=>chart});
+  await oldChart;
+  assert.equal(run('state.shotChart'), null, 'Late data for an old season must not overwrite the current selection');
+
+  const changed = {...chart,season:'2023-24',overall:{made:9,attempts:10,fg_pct:.9}};
+  context.fetch = async () => ({ok:true,json:async()=>changed});
+  await run('loadShotChart()');
+  assert.equal(nodes.get('overall-fg').textContent, '90.0%', 'Changing season updates the numerator and denominator');
+  context.fetch = async () => ({ok:false,status:503,json:async()=>({detail:'NBA unavailable'})});
+  await run('loadShotChart()');
+  assert.equal(nodes.get('overall-fg').textContent, '—', 'A failed reload cannot keep stale percentages');
+  assert.equal(nodes.get('shot-data-retry').hidden, false);
+
+  const pendingPredictions = [];
+  context.fetch = () => new Promise(resolve => pendingPredictions.push(resolve));
+  run(`state.model={model_id:'current-model',player_name:'Current player',season:'2023-24'};state.location={x:0,y:20};`);
+  const firstPrediction = run('predict()');
+  run(`state.location={x:230,y:0}`);
+  const nextPrediction = run('predict()');
+  pendingPredictions[1]({ok:true,json:async()=>({model_id:'current-model',make_probability:.35,shot_value:3,expected_points:1.05})});
+  await nextPrediction;
+  pendingPredictions[0]({ok:true,json:async()=>({model_id:'current-model',make_probability:.8,shot_value:2,expected_points:1.6})});
+  await firstPrediction;
+  assert.equal(nodes.get('probability-value').textContent, '35.0', 'A late old-location prediction cannot overwrite the latest location');
+  console.log('Dashboard checks passed: density rendering, observed percentages, empty zones, filter updates, stale data/locations, model isolation, and recovery.');
 })().catch(error => { console.error(error); process.exitCode=1; });

@@ -201,7 +201,12 @@ progress::-moz-progress-bar { background: var(--accent); }
 .presets button { min-height: 34px; padding: 6px 9px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--muted); font-size: 11px; }
 .presets button:hover, .presets button.active { color: var(--accent); border-color: #a4bce9; background: var(--accent-subtle); }
 .heatmap-legend { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; color: var(--muted); font-size: 11px; }
-.heatmap-legend > div { width: 80px; height: 6px; background: linear-gradient(90deg, #eff6ff, #60a5fa, #1d4ed8); }
+.heatmap-legend > div { width: 80px; height: 6px; background: linear-gradient(90deg, #fee5d9, #ef6548, #99000d); }
+.shot-data-status { margin-top: 16px; }
+.shot-data-method { margin-top: 12px; color: var(--muted); font-size: 12px; }
+.shot-data-method summary { cursor: pointer; padding: 6px 0; }
+.shot-data-method p { margin-top: 8px; }
+.historical-metrics { border-top: 1px solid var(--line); padding-top: 16px; }
 .heatmap-legend .muted { font-size: inherit; }
 
 /* Clear numeric hierarchy and consistent labels for model output. */

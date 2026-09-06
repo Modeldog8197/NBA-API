@@ -16,6 +16,9 @@ Y_MIN, Y_MAX = -52.5, 417.5
 CORNER_X = 220.0
 ARC_RADIUS = 237.5
 ARC_JOIN_Y = math.sqrt(ARC_RADIUS**2 - CORNER_X**2)
+RESTRICTED_RADIUS = 40.0
+PAINT_HALF_WIDTH = 80.0
+PAINT_END_Y = 137.5
 COURT_VERSION = "nba-halfcourt-v1"
 DISTANCE_TOLERANCE_FT = 0.1
 
@@ -56,9 +59,9 @@ def describe_shot(loc_x: float, loc_y: float, shot_distance: float | None = None
             raise ValueError(f"shot_distance conflicts with coordinates; expected {distance:.2f} feet (tolerance 0.1 ft).")
     if is_three:
         zone = ("Left Corner 3" if x < 0 else "Right Corner 3") if y <= ARC_JOIN_Y else "Above the Break 3"
-    elif distance <= 4 and y >= 0:
+    elif distance <= RESTRICTED_RADIUS / 10 and y >= 0:
         zone = "Restricted Area"
-    elif abs(x) <= 80 and y <= 137.5:
+    elif abs(x) <= PAINT_HALF_WIDTH and y <= PAINT_END_Y:
         zone = "Paint (Non-RA)"
     else:
         zone = "Mid-Range"

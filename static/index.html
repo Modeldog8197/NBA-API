@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#f6f7f9">
     <meta name="description" content="Explore basketball shot probabilities with an interactive NBA court, transparent model evaluation, and explainable predictions.">
     <title>NBA API — Shot analysis</title>
-    <link rel="stylesheet" href="/static/styles.css?v=4.1.0">
-    <script src="/static/app.js?v=4.1.0" defer>
+    <link rel="stylesheet" href="/static/styles.css?v=4.2.0">
+    <script src="/static/app.js?v=4.2.0" defer>
     </script>
   </head>
   <body>
@@ -145,15 +145,15 @@
             <div class="court-loading" id="heatmap-loading" role="status" aria-live="polite" hidden>
               <span class="spinner">
               </span>
-              <span>Loading probability heatmap…</span>
+              <span>Loading recorded shot locations…</span>
             </div>
           </div>
           <div class="heatmap-legend" id="heatmap-legend" hidden>
-            <span>Lower probability</span>
+            <span>Lower density</span>
             <div>
             </div>
             <span>Higher</span>
-            <span class="muted">0–100%</span>
+            <span class="muted" id="heatmap-scale">Attempts per square foot</span>
           </div>
           <p class="court-instructions" id="court-instructions">Click the court or use arrow keys when focused. Hold Shift to move 5 feet.</p>
           <div class="shot-controls">
@@ -176,6 +176,12 @@
             <button type="button" data-x="0" data-y="25">Top of the arc</button>
             <button type="button" data-x="15" data-y="10">Midrange</button>
           </div>
+          <p class="field-help shot-data-status" id="shot-data-status" role="status" aria-live="polite">Select a player and season for recorded shooting statistics.</p>
+          <button class="button button-secondary" id="shot-data-retry" type="button" hidden>Retry shot data</button>
+          <details class="shot-data-method">
+            <summary>Shot chart methodology</summary>
+            <p class="field-help">The red map counts actual made and missed attempts in 2.5-foot cells. Empty cells stay clear; intensity is relative to this player-season’s busiest cell. Overall FG% includes valid attempts outside the plotted half court. Zone FG% uses the same court boundaries as the selected location, which may differ from NBA provider zone labels. Percentages are total makes divided by total attempts, never averages of cell percentages.</p>
+          </details>
         </section>
         <aside class="insights" aria-label="Shot analysis">
           <section class="prediction-panel panel" aria-labelledby="prediction-title" aria-busy="false" id="prediction-panel">
@@ -191,6 +197,7 @@
               <span class="probability-unit" id="probability-unit" hidden>%</span>
             </div>
             <p class="probability-label">Estimated make probability</p>
+            <p id="constant-model-note" class="evaluation-note" hidden>This season’s selected model is a constant baseline, so its estimate is the same at every location. Recorded zone FG% below changes with the selected court zone.</p>
             <div class="probability-track" aria-hidden="true">
               <span id="probability-fill">
               </span>
@@ -212,6 +219,18 @@
               </span>
               <span>Court zone<strong id="shot-zone">Awaiting analysis</strong>
               </span>
+            </div>
+            <div class="prediction-metrics historical-metrics" aria-label="Recorded shooting percentages" aria-live="polite">
+              <div>
+                <span class="metric-label">Overall FG%</span>
+                <strong id="overall-fg">—</strong>
+                <span id="overall-fg-counts" class="metric-caption">Recorded season attempts</span>
+              </div>
+              <div>
+                <span id="zone-fg-label" class="metric-label">Selected zone FG%</span>
+                <strong id="zone-fg">—</strong>
+                <span id="zone-fg-counts" class="metric-caption">Select a player and season</span>
+              </div>
             </div>
             <p class="prediction-status" id="prediction-status" role="status" aria-live="polite">Choose a player and season to get started.</p>
             <p class="uncertainty-note">

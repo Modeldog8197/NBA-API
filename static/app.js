@@ -7,7 +7,7 @@ const state = {
   models: [], player: null, model: null, season: '', location: { x: 0, y: 150 },
   generation: 0, predictionSequence: 0, ftSequence: 0, heatmapSequence: 0,
   searchSequence: 0, searchResults: [], searchIndex: -1, trainingEnabled: false,
-  trainingJob: null, trainedModel: null, controllers: {}, heatmapCache: new Map(),
+  trainingJob: null, trainedModel: null, controllers: {}, shotChart: null,
   session: { preparation_enabled: false, requires_key: true, session_token: null },
 };
 let preparationPoll;
@@ -97,6 +97,8 @@ function invalidateSelection() {
   $('heatmap-cells').replaceChildren();
   $('heatmap-loading').hidden = true;
   $('heatmap-legend').hidden = true;
+  state.shotChart = null;
+  renderShootingStats();
   clearPrediction();
 }
 
@@ -255,7 +257,7 @@ function selectModel(model) {
   invalidateSelection();
   state.model = model;
   $('predict-button').disabled = !model;
-  $('heatmap-toggle').disabled = !model;
+  $('heatmap-toggle').disabled = !state.player || !state.season || Number(state.player.id) === 0;
   $('prediction-player').textContent = model?.player_name || (state.player ? state.player.name : 'Choose your model.');
   $('prediction-subtitle').textContent = model ? `${model.season} · ${format.format(model.n_shots ?? 0)} recorded shots` : 'Select a player and season to analyze a shot.';
   const demo = /synthetic|fixture|demo/i.test(model?.source || '');
@@ -265,9 +267,10 @@ function selectModel(model) {
   $('model-quality-note').hidden = !finite(quality) || quality <= 0;
   predictionStatus(model ? 'Analyzing the selected location…' : 'Select a player and season. The model will be prepared when needed.');
   renderMetadata(model);
+  $('constant-model-note').hidden = model?.selected_model !== 'constant_baseline';
+  loadShotChart();
   if (model) {
     predict();
-    if ($('heatmap-toggle').checked) loadHeatmap();
   }
 }
 
@@ -291,6 +294,7 @@ function moveShot(x, y, immediate = false) {
   state.location = { x: Math.round(clamp(x, -250, 250) * 100) / 100, y: Math.round(clamp(y, -52.5, 417.5) * 100) / 100 };
   clearTimeout(predictDebounce);
   clearPrediction(); drawMarker();
+  renderShootingStats();
   if (state.model) {
     predictionStatus('Updating for this location…');
     if (immediate) predict(); else predictDebounce = setTimeout(predict, 220);
@@ -318,7 +322,7 @@ async function predict() {
     $('shot-type').textContent = data.shot_value === 3 ? 'three-point attempt' : 'two-point attempt';
     $('shot-distance').textContent = `${fixed(data.distance_ft, 1)} ft`;
     $('shot-zone').textContent = data.shot_zone || 'Unavailable';
-    predictionStatus(`Estimate for ${model.player_name} · ${model.season}.`);
+    predictionStatus(`${model.selected_model === 'constant_baseline' ? 'Constant baseline estimate' : 'Estimate'} for ${model.player_name} · ${model.season}.`);
     renderExplanation(data.explanation);
   } catch (error) {
     if (error.name === 'AbortError' || sequence !== state.predictionSequence || generation !== state.generation) return;
@@ -455,43 +459,86 @@ async function loadFreeThrows() {
   }
 }
 
-function heatColor(probability) {
-  const stops = [[239, 246, 255], [96, 165, 250], [29, 78, 216]];
-  const p = clamp(Number(probability), 0, 1) * 2;
+function heatColor(intensity) {
+  const stops = [[254, 229, 217], [239, 101, 72], [153, 0, 13]];
+  const p = clamp(Number(intensity), 0, 1) * 2;
   const left = Math.min(Math.floor(p), 1); const factor = p - left;
   return `rgb(${stops[left].map((value, i) => Math.round(value + (stops[left + 1][i] - value) * factor)).join(' ')})`;
 }
 
-function drawHeatmap(predictions) {
+function drawHeatmap(chart) {
   const fragment = document.createDocumentFragment();
-  predictions.forEach((prediction) => {
-    if (!finite(prediction.make_probability)) return;
-    fragment.append(svgElement('rect', { x: prediction.loc_x + 300 - 12.5, y: prediction.loc_y + 92.5 - 12.5, width: 25.3, height: 25.3, fill: heatColor(prediction.make_probability), opacity: .53 }));
+  chart.cells.forEach((cell) => {
+    if (!cell.attempts || !finite(cell.intensity)) return;
+    const rect = svgElement('rect', { x: cell.loc_x + 300, y: cell.loc_y + 92.5,
+      width: cell.width, height: cell.height, fill: heatColor(cell.intensity), opacity: .72 });
+    const title = svgElement('title', {});
+    title.textContent = `${cell.made}/${cell.attempts} made (${percentage(cell.fg_pct)}) · ${fixed(cell.attempts_per_sq_ft, 2)} attempts/ft²`;
+    rect.append(title); fragment.append(rect);
   });
   $('heatmap-cells').replaceChildren(fragment);
-  $('heatmap-legend').hidden = false;
+  $('heatmap-legend').hidden = !chart.cells.length;
+  $('heatmap-scale').textContent = `0–${fixed(chart.max_density, 2)} attempts/ft²`;
 }
 
-async function loadHeatmap() {
-  const model = state.model;
-  if (!$('heatmap-toggle').checked || !model) return;
-  const cached = state.heatmapCache.get(model.model_id);
-  if (cached) { drawHeatmap(cached); return; }
+function selectedShotZone(geometry) {
+  const {x, y} = state.location;
+  const distance = Math.hypot(x, y);
+  const isThree = (y <= geometry.arc_join_y ? Math.abs(x) - geometry.corner_x : distance - geometry.arc_radius) > 1e-8;
+  if (isThree) return y <= geometry.arc_join_y ? (x < 0 ? 'Left Corner 3' : 'Right Corner 3') : 'Above the Break 3';
+  if (distance <= geometry.restricted_radius && y >= 0) return 'Restricted Area';
+  if (Math.abs(x) <= geometry.paint_half_width && y <= geometry.paint_end_y) return 'Paint (Non-RA)';
+  return 'Mid-Range';
+}
+
+function renderShootingStats() {
+  const chart = state.shotChart;
+  $('overall-fg').textContent = chart ? percentage(chart.overall.fg_pct) : '—';
+  $('overall-fg-counts').textContent = chart ? `${format.format(chart.overall.made)} / ${format.format(chart.overall.attempts)} made` : 'Recorded season attempts';
+  $('zone-fg').textContent = '—';
+  $('zone-fg-counts').textContent = 'Select a player and season';
+  $('zone-fg-label').textContent = 'Selected zone FG%';
+  if (!chart) return;
+  const name = selectedShotZone(chart.geometry);
+  const zone = chart.zones.find(item => item.name === name);
+  $('zone-fg-label').textContent = `${name} FG%`;
+  $('zone-fg').textContent = zone ? percentage(zone.fg_pct) : '—';
+  $('zone-fg-counts').textContent = zone?.attempts ? `${format.format(zone.made)} / ${format.format(zone.attempts)} made${zone.attempts < 20 ? ' · small sample' : ''}` : 'No recorded attempts in this zone';
+  // Historical zone counts remain usable even if there is insufficient data to train a model.
+  if (!state.model) $('shot-zone').textContent = name;
+}
+
+function loadHeatmap() {
+  if (!$('heatmap-toggle').checked) return;
+  if (state.shotChart) drawHeatmap(state.shotChart);
+  else if (state.controllers.heatmap) $('heatmap-loading').hidden = false;
+  else loadShotChart();
+}
+
+async function loadShotChart() {
+  abort('heatmap');
+  const player = state.player, season = state.season;
+  state.shotChart = null; renderShootingStats();
+  $('heatmap-cells').replaceChildren(); $('heatmap-legend').hidden = true;
+  $('shot-data-retry').hidden = true;
+  $('shot-data-status').textContent = 'Select a player and season for recorded shooting statistics.';
+  if (!player || !season) return;
+  if (Number(player.id) === 0) { $('shot-data-status').textContent = 'Synthetic demo: historical NBA shot data is unavailable.'; return; }
   const generation = state.generation; const sequence = ++state.heatmapSequence;
-  $('heatmap-loading').hidden = false;
-  const shots = [];
-  // 20 × 19 points = 380 predictions, below the server's 500-shot limit.
-  for (let y = -40; y <= 410; y += 25) for (let x = -237.5; x <= 237.5; x += 25) shots.push({ loc_x: x, loc_y: y });
+  $('heatmap-loading').hidden = !$('heatmap-toggle').checked;
+  $('shot-data-status').textContent = 'Loading recorded shot locations and shooting percentages…';
   try {
-    const result = await api('/predict/batch', { method: 'POST', body: JSON.stringify({ model_id: model.model_id, shots, explain: false }) }, 'heatmap');
-    if (generation !== state.generation || sequence !== state.heatmapSequence || result.model_id !== state.model?.model_id || !$('heatmap-toggle').checked) return;
-    state.heatmapCache.set(model.model_id, result.predictions);
-    if (state.heatmapCache.size > 5) state.heatmapCache.delete(state.heatmapCache.keys().next().value);
-    drawHeatmap(result.predictions);
+    const result = await api(`/player/shot-chart?player_id=${encodeURIComponent(player.id)}&season=${encodeURIComponent(season)}`, {}, 'heatmap');
+    if (generation !== state.generation || sequence !== state.heatmapSequence || Number(state.player?.id) !== Number(player.id) || state.season !== season) return;
+    if (Number(result.player_id) !== Number(player.id) || result.season !== season) throw new Error('Shot data does not match the selected player and season.');
+    state.shotChart = result; renderShootingStats();
+    const excluded = Object.values(result.excluded).reduce((total, count) => total + count, 0);
+    $('shot-data-status').textContent = `${player.name} · ${season}: ${format.format(result.plotted.attempts)} of ${format.format(result.overall.attempts)} recorded attempts plotted. Red shows shot density.${result.provenance?.stale ? ' Using stale cached NBA data.' : ''}${excluded ? ` ${excluded} invalid, duplicate, or conflicting records excluded.` : ''}`;
+    if ($('heatmap-toggle').checked) drawHeatmap(result);
   } catch (error) {
     if (error.name === 'AbortError' || generation !== state.generation || sequence !== state.heatmapSequence) return;
-    $('heatmap-toggle').checked = false;
-    showMessage(`The probability heatmap could not be loaded. ${error.message}`);
+    $('shot-data-status').textContent = `Recorded shooting data unavailable. ${error.message}`;
+    $('shot-data-retry').hidden = false;
   } finally {
     if (generation === state.generation && sequence === state.heatmapSequence) $('heatmap-loading').hidden = true;
   }
@@ -659,9 +706,10 @@ function bindEvents() {
   });
   $('heatmap-toggle').addEventListener('change', () => {
     if ($('heatmap-toggle').checked) loadHeatmap();
-    else { abort('heatmap'); state.heatmapSequence += 1; $('heatmap-cells').replaceChildren(); $('heatmap-loading').hidden = true; $('heatmap-legend').hidden = true; }
+    else { $('heatmap-cells').replaceChildren(); $('heatmap-loading').hidden = true; $('heatmap-legend').hidden = true; }
   });
-  window.addEventListener('pagehide', () => { Object.keys(state.controllers).forEach(abort); clearTimeout(trainingPoll); clearTimeout(predictDebounce); clearTimeout(searchDebounce); $('training-key').value = ''; });
+  $('shot-data-retry').addEventListener('click', loadShotChart);
+  window.addEventListener('pagehide', () => { Object.keys(state.controllers).forEach(abort); clearTimeout(preparationPoll); clearTimeout(trainingPoll); clearTimeout(predictDebounce); clearTimeout(searchDebounce); $('training-key').value = ''; });
 }
 
 async function initialize() {

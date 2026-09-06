@@ -1,6 +1,6 @@
 # NBA API
 
-A basketball shot probability dashboard and FastAPI service built with Python and XGBoost. Search the NBA player catalog, choose one of that player's recorded seasons, and explore shot locations with make probability, expected points, a probability heatmap, and checked feature explanations. The local dashboard prepares missing player-season models from actual NBA records. Every prediction identifies its player, season, and immutable model version.
+A basketball shot probability dashboard and FastAPI service built with Python and XGBoost. Search the NBA player catalog, choose one of that player's recorded seasons, and explore shot locations with make probability, expected points, a red shot-density map, recorded zone/overall FG%, and checked feature explanations. The local dashboard prepares missing player-season models from actual NBA records. Every prediction identifies its player, season, and immutable model version.
 
 This project builds on [basketball-short-predictor](https://github.com/Modeldog8197/basketball-short-predictor). Its original Git history is preserved. See the [source audit and implementation plan](docs/AUDIT.md) and [evaluation methodology and evidence](docs/EVALUATION.md).
 
@@ -134,7 +134,8 @@ curl 'http://localhost:8000/player/freethrow?player_id=201939&season=2023-24'
 | `GET /models` | Available versioned model metadata. |
 | `GET /models/{model_id}` | Provenance, feature contract, and evaluation for one model. |
 | `POST /predict` | Predict a single shot using an explicitly selected model. |
-| `POST /predict/batch` | Predict 1–500 shots under one model identity; accepts `explain: false` for heatmaps. |
+| `POST /predict/batch` | Predict 1–500 shots under one model identity; accepts `explain: false` for bulk inference. |
+| `GET /player/shot-chart` | Exact player-season observed makes, attempts, zone FG%, and area-normalized density cells; no model required. |
 | `GET /player/freethrow` | Historical free-throw totals for the requested player and exact season. |
 | `POST /model/retrain` | Start protected background training; returns a job ID. |
 | `GET /model/retrain/status?job_id=...` | Inspect training progress or failure for that job. |
@@ -245,6 +246,8 @@ Tests cover court boundaries, input conflicts, feature agreement, data quality, 
 
 The player catalog includes active and historical players; shot models support seasons from 1997–98 onward when NBA data is available. A model requires at least 150 usable shots across 15 games, and at least 20 shots in each chronological split. A listed player or season does not guarantee enough data to train. An unavailable season, insufficient sample, or NBA outage must not be presented as a prediction from another player's model.
 
-The model learns a player's historical location/outcome associations from available regular-season field goals. Adequate volume still does not establish reliability in sparse court regions or future seasons. Heatmaps can interpolate into locations the player rarely attempts. Synthetic smoke-test metrics prove the pipeline runs, not NBA predictive performance. Always inspect the model's provenance and held-out evaluation before interpreting predictions.
+The model learns a player's historical location/outcome associations from available regular-season field goals. Adequate volume still does not establish reliability in sparse court regions or future seasons. Model estimates can extrapolate into locations the player rarely attempts. Synthetic smoke-test metrics prove the pipeline runs, not NBA predictive performance. Always inspect the model's provenance and held-out evaluation before interpreting predictions.
+
+The red heatmap uses actual made and missed shot locations in 2.5-foot cells, with density normalized by cell area and the selected player-season's busiest cell. Empty cells stay clear. Density is not make probability. Overall FG% divides total makes by total valid attempts, including heaves outside the displayed half court. Zone FG% uses the same coordinate boundaries as the interactive court; these can differ from NBA provider zone labels. Duplicate events are counted once; invalid and conflicting events are excluded with visible counts. Zero-attempt zones display no percentage. Recorded statistics come from NBA records independently of model selection and can include attempts excluded from model training. A selected constant baseline legitimately predicts the same probability everywhere; the dashboard labels this and shows separately updating observed zone percentages.
 
 Shot data comes from NBA Stats through [nba_api's ShotChartDetail endpoint](https://github.com/swar/nba_api/blob/master/docs/nba_api/stats/endpoints/shotchartdetail.md). Player season history and free throws come from its [PlayerCareerStats endpoint](https://github.com/swar/nba_api/blob/master/docs/nba_api/stats/endpoints/playercareerstats.md). This is an independent project, not an official NBA service. The upstream repository did not include a license; no new license is asserted here.
