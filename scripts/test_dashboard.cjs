@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 class Element {
-  constructor(tag = 'div') { this.tagName = tag; this.children = []; this.style = {}; this.textContent = ''; this.attributes = {}; this.classList = {add(){},toggle(){}}; }
+  constructor(tag = 'div') { this.tagName = tag; this.children = []; this.style = {}; this.textContent = ''; this.value = ''; this.hidden = false; this.attributes = {}; this.classList = {add(){},toggle(){}}; }
   append(...items) { this.children.push(...items); }
   replaceChildren(...items) { this.children = items; this.textContent = ''; }
   setAttribute(k, v) { this.attributes[k] = v; }
@@ -45,5 +45,31 @@ assert.match(textOf(nodes.get('evaluation-content')), /CALIBRATION/);
   await pending;
   assert.equal(nodes.get('probability-value').textContent, '—', 'Old response must not appear after model change');
   assert.equal(nodes.get('explanation-content').children[0].className, 'empty-explanation');
-  console.log('Dashboard checks passed: explanation contract, evaluation table/calibration, stale prediction isolation.');
+
+  run(`state.player={id:42,name:'Earlier player'};state.season='2023-24';`);
+  const waitingForModel = run(`acceptPreparedModel({player_id:42,season:'2023-24',model_id:'old-ready'},state.generation,{id:42},'2023-24')`);
+  run(`invalidateSelection();state.player={id:84,name:'Current player'};state.season='2024-25';state.model={model_id:'current-model'};`);
+  finish({ok:true,json:async()=>({player_id:42,season:'2023-24',model_id:'old-ready'})});
+  await waitingForModel;
+  assert.equal(run('state.model.model_id'), 'current-model', 'A late prepared model must not change selection');
+
+  run(`state.model=null;state.session={preparation_enabled:true,requires_key:true,session_token:null};`);
+  context.fetch = () => { throw new Error('Hosted preparation must not run without an explicit access key'); };
+  await run('ensureSelectedModel()');
+  assert.match(nodes.get('preparation-status').textContent, /access key/);
+  assert.equal(nodes.get('prepare-model-button').hidden, false);
+
+  await run(`followPreparation({status:'unavailable',message:'Not enough historical shots.'},state.generation,state.player,state.season)`);
+  assert.match(nodes.get('preparation-status').textContent, /Not enough historical shots/);
+  assert.equal(nodes.get('preparation-progress').hidden, true);
+
+  let finishSeasons;
+  context.fetch = () => new Promise(resolve => { finishSeasons=resolve; });
+  const waitingForSeasons = run(`selectPlayer({id:42,name:'Earlier player'})`);
+  run(`invalidateSelection();state.player={id:84,name:'Current player'};state.season='2024-25';`);
+  finishSeasons({ok:true,json:async()=>({player_id:42,seasons:['2023-24']})});
+  await waitingForSeasons;
+  assert.equal(run('state.season'), '2024-25', 'A late season lookup must not change the new player season');
+  assert.equal(run('state.player.id'), 84);
+  console.log('Dashboard checks passed: rendering, calibration, stale predictions/models/seasons, hosted access, and unavailable-data recovery.');
 })().catch(error => { console.error(error); process.exitCode=1; });

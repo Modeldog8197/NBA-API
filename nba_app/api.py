@@ -7,8 +7,11 @@ from pathlib import Path
 import threading
 from typing import Any, Literal
 import uuid
+import secrets
+from contextlib import asynccontextmanager
+from urllib.parse import urlsplit
 
-from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
@@ -20,6 +23,7 @@ from .config import ROOT, Settings, available_seasons, validate_season
 from .data import DataUnavailableError, NBADataClient
 from .models import MODEL_ID_RE, ModelStore, ModelValidationError
 from .training import train_bundle
+from .preparation import ModelPreparationService, PreparationBusyError
 
 log = logging.getLogger(__name__)
 
@@ -158,15 +162,49 @@ class JobResponse(BaseModel):
     created_at: str
 
 
+class PreparationResponse(BaseModel):
+    player_id: int
+    player_name: str
+    season: str
+    status: Literal["ready", "not_prepared", "preparing", "unavailable", "error", "queued", "fetching", "training", "evaluating", "publishing", "done"]
+    message: str
+    model_id: str | None = None
+    job_id: str | None = None
+    error: str | None = None
+    created_at: str | None = None
+
+
+class SessionResponse(BaseModel):
+    preparation_enabled: bool
+    requires_key: bool
+    session_token: str | None = None
+
+
+class PlayerSeasonsResponse(BaseModel):
+    player_id: int
+    player_name: str
+    seasons: list[str]
+    provenance: dict[str, Any]
+
+
 def create_app(settings: Settings | None = None, data_client=None, store=None) -> FastAPI:
     config = settings or Settings.from_env()
     client = data_client or NBADataClient(config)
     registry = store or ModelStore(config.model_dir)
-    app = FastAPI(title="NBA API", version="4.0.0", description=(
+    preparation = ModelPreparationService(config, client, registry)
+    local_session_token = secrets.token_urlsafe(32)
+
+    @asynccontextmanager
+    async def lifespan(application):
+        yield
+        preparation.close(wait=False)
+
+    app = FastAPI(title="NBA API", version="4.1.0", lifespan=lifespan, description=(
         "Basketball shot probabilities with immutable player-season model versions. "
         "Coordinates use tenths of a foot, with the hoop at the origin."
     ))
     app.state.settings, app.state.store, app.state.data_client = config, registry, client
+    app.state.preparation = preparation
     app.state.jobs = {}
     jobs_lock = threading.Lock()
     app.add_middleware(CORSMiddleware, allow_origins=list(config.cors_origins),
@@ -182,8 +220,7 @@ def create_app(settings: Settings | None = None, data_client=None, store=None) -
                 "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
                 "img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'"
             )
-        if not request.url.path.startswith("/static"):
-            response.headers["Cache-Control"] = "no-store"
+        response.headers["Cache-Control"] = "no-cache" if request.url.path.startswith("/static/") else "no-store"
         return response
 
     @app.exception_handler(DataUnavailableError)
@@ -234,6 +271,68 @@ def create_app(settings: Settings | None = None, data_client=None, store=None) -
     @app.get("/players/search", response_model=list[PlayerResponse])
     def search_players(q: str = Query(default="", max_length=80)):
         return client.search_players(q)
+
+    @app.get("/players/{player_id}/seasons", response_model=PlayerSeasonsResponse)
+    def player_seasons(player_id: int):
+        try:
+            return client.fetch_player_seasons(player_id)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    def is_local_dashboard(request: Request) -> bool:
+        """Loopback + exact local Host + same origin: no remote/proxy/DNS-rebinding shortcut."""
+        if not config.local_player_models or not request.client:
+            return False
+        if request.client.host not in {"127.0.0.1", "::1"}:
+            return False
+        host = request.headers.get("host", "").lower()
+        try:
+            hostname = urlsplit(f"http://{host}").hostname
+        except ValueError:
+            return False
+        if hostname not in {"localhost", "127.0.0.1", "::1"}:
+            return False
+        if request.headers.get("sec-fetch-site", "same-origin") not in {"same-origin", "none"}:
+            return False
+        origin = request.headers.get("origin")
+        return origin is None or origin in {f"http://{host}", f"https://{host}"}
+
+    @app.get("/session", response_model=SessionResponse)
+    def session(request: Request):
+        local = is_local_dashboard(request)
+        return {"preparation_enabled": local or config.training_enabled,
+                "requires_key": not local, "session_token": local_session_token if local else None}
+
+    @app.get("/models/readiness", response_model=PreparationResponse)
+    def model_readiness(player_id: int = Query(gt=0), season: str = Query()):
+        try:
+            validate_season(season)
+            return preparation.readiness(player_id, season)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @app.post("/models/prepare", response_model=PreparationResponse, status_code=202)
+    def prepare_model(req: RetrainRequest, request: Request,
+                      authorization: str | None = Header(default=None),
+                      x_local_session: str | None = Header(default=None)):
+        local = is_local_dashboard(request) and hmac.compare_digest(x_local_session or "", local_session_token)
+        token = authorization[7:] if authorization and authorization.startswith("Bearer ") else ""
+        hosted = config.training_enabled and hmac.compare_digest(token, config.training_api_key or "")
+        if not local and not hosted:
+            raise HTTPException(401, "Open the local dashboard or provide the server's training access key.")
+        try:
+            return preparation.prepare(req.player_id, req.season)
+        except PreparationBusyError as exc:
+            raise HTTPException(429, str(exc), headers={"Retry-After": "5"}) from exc
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @app.get("/models/preparation/{job_id}", response_model=PreparationResponse)
+    def preparation_status(job_id: str):
+        try:
+            return preparation.job_status(job_id)
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from exc
 
     @app.get("/models", response_model=ModelsResponse)
     def models():

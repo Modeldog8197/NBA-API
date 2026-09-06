@@ -1,18 +1,18 @@
 """NBA sources with bounded requests, JSON cache, and visible provenance."""
-from datetime import datetime, timezone
 import hashlib
 import json
 import logging
 import os
 import time
 import uuid
+from datetime import UTC, datetime
 
 import numpy as np
 import pandas as pd
 from nba_api.stats.endpoints import PlayerCareerStats, ShotChartDetail
 from nba_api.stats.static import players
 
-from .config import Settings, validate_season
+from .config import Settings, available_seasons, validate_season
 
 log = logging.getLogger(__name__)
 
@@ -42,30 +42,33 @@ class NBADataClient:
         matches.sort(key=lambda p: (not p["is_active"], p["full_name"]))
         return [{"id": p["id"], "name": p["full_name"]} for p in matches[:20]]
 
-    def _cached_request(self, key: str, loader) -> tuple[pd.DataFrame, dict]:
+    def _cached_request(self, key: str, loader, *, allow_empty: bool = False) -> tuple[pd.DataFrame, dict]:
         path = self.settings.cache_dir / f"{key}.json"
         cached = None
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-            if payload["key"] != key or not isinstance(payload["records"], list) or not payload["records"]:
+            if (payload["key"] != key or not isinstance(payload["records"], list)
+                    or (not payload["records"] and not allow_empty)):
                 raise ValueError("Invalid cache envelope")
             fetched = datetime.fromisoformat(payload["fetched_at"])
             if fetched.tzinfo is None:
                 raise ValueError("Cache timestamp must have a timezone")
             cached = payload
-            age = (datetime.now(timezone.utc) - fetched).total_seconds()
+            age = (datetime.now(UTC) - fetched).total_seconds()
             if 0 <= age <= self.settings.cache_ttl_seconds:
-                return pd.DataFrame(cached["records"]), self._provenance(cached, "cache", False)
+                return pd.DataFrame(cached["records"], columns=cached.get("columns")), self._provenance(cached, "cache", False)
         except (OSError, ValueError, TypeError, KeyError):
             pass
         error = None
         for attempt in range(self.settings.retries + 1):
             try:
                 df = loader()
-                if not isinstance(df, pd.DataFrame) or df.empty:
+                if not isinstance(df, pd.DataFrame) or (df.empty and not allow_empty):
                     raise DataUnavailableError("NBA returned no records for this player and season.")
-                payload = {"key": key, "fetched_at": datetime.now(timezone.utc).isoformat(),
+                payload = {"key": key, "fetched_at": datetime.now(UTC).isoformat(),
                            "records": json.loads(df.to_json(orient="records", date_format="iso"))}
+                if df.empty:
+                    payload["columns"] = df.columns.tolist()
                 self.settings.cache_dir.mkdir(parents=True, exist_ok=True)
                 temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
                 try:
@@ -74,7 +77,7 @@ class NBADataClient:
                 finally:
                     temporary.unlink(missing_ok=True)
                 return df, self._provenance(payload, "live_nba", False)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - NBA transport and response failures share bounded retry handling.
                 error = exc
                 log.warning("NBA request %s attempt %d failed (%s)", key, attempt + 1, type(exc).__name__)
                 if isinstance(exc, DataUnavailableError):
@@ -82,7 +85,9 @@ class NBADataClient:
                 if attempt < self.settings.retries:
                     time.sleep(min(2 ** attempt, 4))
         if cached and self.settings.allow_stale_cache:
-            return pd.DataFrame(cached["records"]), self._provenance(cached, "stale_cache", True)
+            return pd.DataFrame(cached["records"], columns=cached.get("columns")), self._provenance(cached, "stale_cache", True)
+        if isinstance(error, DataUnavailableError):
+            raise error
         raise DataUnavailableError(
             "NBA data could not be loaded after bounded attempts. NBA may block or time out requests. "
             "Try again later or train from a local CSV; no usable cached records are available."
@@ -128,3 +133,33 @@ class NBADataClient:
         return {"player_id": player_id, "player_name": player["name"], "season": season,
                 "ft_pct": ftm / fta if fta else None, "ftm": ftm, "fta": fta,
                 "source": "NBA historical statistics", "provenance": provenance}
+
+    def fetch_player_seasons(self, player_id: int) -> dict:
+        """Return supported seasons in this player's career with field-goal attempts.
+
+        Career totals share the free-throw cache. A season's presence establishes
+        that it was played, not that it has enough clean shots to train a model.
+        """
+        player = self.resolve_player(player_id)
+        df, provenance = self._cached_request(f"career-{int(player_id)}-regular-v1", lambda: PlayerCareerStats(
+            player_id=player_id, timeout=self.settings.request_timeout,
+        ).get_data_frames()[0], allow_empty=True)
+        if not {"SEASON_ID", "TEAM_ID", "FGA"}.issubset(df.columns):
+            raise DataUnavailableError("NBA career response is missing the season and field-goal fields.")
+        supported = set(available_seasons())
+        seasons = []
+        for season, rows in df.groupby("SEASON_ID"):
+            if str(season) not in supported:
+                continue
+            # Prefer the season total for traded players; never count it twice.
+            totals = rows.loc[pd.to_numeric(rows["TEAM_ID"], errors="coerce") == 0]
+            rows = totals.iloc[:1] if not totals.empty else rows.drop_duplicates(subset=["TEAM_ID"])
+            attempts = pd.to_numeric(rows["FGA"], errors="coerce")
+            if (not np.isfinite(attempts.to_numpy()).all() or (attempts < 0).any()
+                    or (attempts % 1 != 0).any()):
+                raise DataUnavailableError("NBA returned invalid career field-goal counts.")
+            if attempts.sum() > 0:
+                seasons.append(str(season))
+        return {"player_id": player["id"], "player_name": player["name"],
+                "seasons": sorted(seasons, reverse=True), "source": "NBA historical statistics",
+                "provenance": provenance}

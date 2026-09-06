@@ -8,7 +8,9 @@ const state = {
   generation: 0, predictionSequence: 0, ftSequence: 0, heatmapSequence: 0,
   searchSequence: 0, searchResults: [], searchIndex: -1, trainingEnabled: false,
   trainingJob: null, trainedModel: null, controllers: {}, heatmapCache: new Map(),
+  session: { preparation_enabled: false, requires_key: true, session_token: null },
 };
+let preparationPoll;
 const featureNames = {
   LOC_X: 'Horizontal position', LOC_Y: 'Position toward half court', SHOT_DISTANCE: 'Distance to basket',
   SHOT_ANGLE: 'Angle to basket', SHOT_ANGLE_ABS: 'Absolute shot angle', SHOT_TYPE_ENC: 'Shot value',
@@ -89,7 +91,8 @@ function clearPrediction() {
 
 function invalidateSelection() {
   state.generation += 1;
-  abort('heatmap'); abort('freethrow');
+  abort('heatmap'); abort('freethrow'); abort('player-seasons'); abort('preparation');
+  clearTimeout(preparationPoll);
   state.ftSequence += 1; state.heatmapSequence += 1;
   $('heatmap-cells').replaceChildren();
   $('heatmap-loading').hidden = true;
@@ -130,15 +133,122 @@ function updateModelOptions(preferredId = null) {
   selectModel(selected || null);
 }
 
-function selectPlayer(player) {
+async function selectPlayer(player) {
+  const previousSeason = state.season;
   state.player = { id: Number(player.id), name: player.name };
   $('player-search').value = player.name;
   $('player-help').textContent = `NBA player ID ${player.id}`;
   hideSearch();
-  invalidateSelection();
-  updateModelOptions();
+  state.season = '';
+  selectModel(null);
+  const generation = state.generation;
+  $('season').replaceChildren(element('option', '', 'Loading seasons…'));
+  $('season').disabled = true;
+  $('model-select').replaceChildren(element('option', '', 'Choose a season'));
+  $('model-select').disabled = true;
+  preparationStatus('Loading available seasons…', false, 0);
   loadFreeThrows();
   refreshTrainingContext();
+  let seasons = state.models.filter(m => Number(m.player_id) === Number(player.id)).map(m => m.season);
+  try {
+    if (Number(player.id) !== 0) {
+      const result = await api(`/players/${encodeURIComponent(player.id)}/seasons`, {}, 'player-seasons');
+      if (generation !== state.generation || Number(state.player?.id) !== Number(player.id)) return;
+      seasons = [...new Set([...result.seasons, ...seasons])];
+    }
+  } catch (error) {
+    if (error.name === 'AbortError' || generation !== state.generation) return;
+    if (!seasons.length) {
+      preparationStatus(`Available seasons could not be loaded. ${error.message}`, true);
+      $('season').replaceChildren(element('option', '', 'Seasons unavailable'));
+      $('prepare-model-button').textContent = 'Retry season lookup';
+      return;
+    }
+    showMessage('The NBA season list is unavailable. Saved seasons are still available.');
+  }
+  if (generation !== state.generation) return;
+  seasons.sort().reverse();
+  $('season').replaceChildren();
+  seasons.forEach(season => { const option = element('option', '', season); option.value = season; $('season').append(option); });
+  state.season = seasons.includes(previousSeason) ? previousSeason : seasons[0] || '';
+  $('season').value = state.season;
+  $('season').disabled = !seasons.length;
+  if (!seasons.length) $('season').append(element('option', '', 'No supported seasons'));
+  updateModelOptions(); loadFreeThrows(); refreshTrainingContext();
+  if (!state.season) preparationStatus('No recorded field-goal seasons from 1997–98 onward are available for this player.');
+  else ensureSelectedModel();
+}
+
+function preparationStatus(message, retry = false, progress = null) {
+  $('preparation-status').textContent = message;
+  $('prepare-model-button').hidden = !retry;
+  $('prepare-model-button').disabled = !state.player;
+  $('prepare-model-button').textContent = 'Prepare player model';
+  $('preparation-progress').hidden = progress === null;
+  $('preparation-message').textContent = message;
+  if (progress !== null) $('preparation-meter').value = progress;
+}
+
+async function acceptPreparedModel(result, generation, player, season) {
+  if (generation !== state.generation || Number(state.player?.id) !== Number(player.id) || state.season !== season) return;
+  if (Number(result.player_id) !== Number(player.id) || result.season !== season || !result.model_id) throw new Error('Model identity does not match the selected player and season.');
+  const model = await api(`/models/${encodeURIComponent(result.model_id)}`, {}, 'preparation');
+  if (generation !== state.generation) return;
+  if (Number(model.player_id) !== Number(player.id) || model.season !== season) throw new Error('The prepared model has an inconsistent identity.');
+  state.models = [model, ...state.models.filter(item => item.model_id !== model.model_id)];
+  updateModelOptions(model.model_id);
+  preparationStatus(`${player.name} · ${season} — model ready.`);
+}
+
+async function followPreparation(result, generation, player, season, attempt = 0) {
+  if (generation !== state.generation) return;
+  if (result.status === 'done' || result.status === 'ready') {
+    await acceptPreparedModel(result, generation, player, season); return;
+  }
+  if (result.status === 'error' || result.status === 'unavailable') {
+    preparationStatus(result.message || 'A model could not be prepared for this season.', true);
+    predictionStatus(result.message || 'Player model unavailable.', true); return;
+  }
+  if (!result.job_id || attempt > 360) throw new Error('Model preparation status is unavailable. Try again to reconnect to the job.');
+  const progress = { queued: 5, fetching: 20, training: 55, evaluating: 80, publishing: 95 };
+  preparationStatus(result.message, false, progress[result.status] || 10);
+  preparationPoll = setTimeout(async () => {
+    if (generation !== state.generation) return;
+    try {
+      const next = await api(`/models/preparation/${encodeURIComponent(result.job_id)}`, {}, 'preparation');
+      await followPreparation(next, generation, player, season, attempt + 1);
+    } catch (error) {
+      if (error.name !== 'AbortError' && generation === state.generation) preparationStatus(error.message, true);
+    }
+  }, 1500);
+}
+
+async function ensureSelectedModel(explicit = false) {
+  if (!state.player) return;
+  if (!state.season) { if (explicit) selectPlayer(state.player); return; }
+  if (state.model) { preparationStatus(`${state.player.name} · ${state.season} — model ready.`); return; }
+  const generation = state.generation, player = { ...state.player }, season = state.season;
+  if (!state.session.preparation_enabled) {
+    preparationStatus('No saved model for this season. Player preparation is not enabled on this server.'); return;
+  }
+  const headers = {};
+  if (state.session.session_token) headers['X-Local-Session'] = state.session.session_token;
+  else {
+    const key = $('training-key').value.trim();
+    if (!explicit || !key) {
+      preparationStatus('This player needs a model. Enter the server access key in Advanced controls to prepare it.', true);
+      if (explicit) { $('training-panel').hidden = false; $('show-training').setAttribute('aria-expanded', 'true'); $('training-key').focus(); }
+      return;
+    }
+    headers.Authorization = `Bearer ${key}`;
+  }
+  preparationStatus('Preparing the selected player and season…', false, 5);
+  try {
+    const result = await api('/models/prepare', { method: 'POST', headers, body: JSON.stringify({ player_id: player.id, season }) }, 'preparation');
+    await followPreparation(result, generation, player, season);
+  } catch (error) {
+    if (error.name !== 'AbortError' && generation === state.generation) preparationStatus(error.message, true);
+  }
 }
 
 function selectModel(model) {
@@ -147,13 +257,13 @@ function selectModel(model) {
   $('predict-button').disabled = !model;
   $('heatmap-toggle').disabled = !model;
   $('prediction-player').textContent = model?.player_name || (state.player ? state.player.name : 'Choose your model.');
-  $('prediction-subtitle').textContent = model ? `${model.season} · ${format.format(model.n_shots ?? 0)} recorded shots` : 'A player, a season, a better perspective.';
+  $('prediction-subtitle').textContent = model ? `${model.season} · ${format.format(model.n_shots ?? 0)} recorded shots` : 'Select a player and season to analyze a shot.';
   const demo = /synthetic|fixture|demo/i.test(model?.source || '');
   $('prediction-badge').textContent = model ? demo ? 'SYNTHETIC DEMO' : 'MODEL READY' : 'NO MODEL';
   $('model-help').textContent = model ? 'Predictions stay tied to this saved version.' : 'Train a model for this player and season.';
   const quality = model?.evaluation?.selected_minus_constant_test_log_loss;
   $('model-quality-note').hidden = !finite(quality) || quality <= 0;
-  predictionStatus(model ? 'Analyzing the selected location…' : 'No saved model for this selection. Train a model to get started.');
+  predictionStatus(model ? 'Analyzing the selected location…' : 'Select a player and season. The model will be prepared when needed.');
   renderMetadata(model);
   if (model) {
     predict();
@@ -346,7 +456,7 @@ async function loadFreeThrows() {
 }
 
 function heatColor(probability) {
-  const stops = [[48, 54, 133], [22, 157, 156], [197, 245, 123]];
+  const stops = [[239, 246, 255], [96, 165, 250], [29, 78, 216]];
   const p = clamp(Number(probability), 0, 1) * 2;
   const left = Math.min(Math.floor(p), 1); const factor = p - left;
   return `rgb(${stops[left].map((value, i) => Math.round(value + (stops[left + 1][i] - value) * factor)).join(' ')})`;
@@ -495,6 +605,7 @@ function bindEvents() {
       $('model-select').replaceChildren(element('option', '', 'Select a player first'));
       $('model-select').disabled = true;
       selectModel(null); loadFreeThrows(); refreshTrainingContext();
+      preparationStatus('Select a player from the search results.');
     }
     $('player-help').textContent = 'Select a player from the results.';
     if (query.length < 2) hideSearch(); else searchDebounce = setTimeout(() => searchPlayers(query), 240);
@@ -514,7 +625,8 @@ function bindEvents() {
     $('player-search').setAttribute('aria-activedescendant', active.id); active.scrollIntoView({ block: 'nearest' });
   });
   document.addEventListener('pointerdown', (event) => { if (!event.target.closest('.player-field')) hideSearch(); });
-  $('season').addEventListener('change', () => { state.season = $('season').value; invalidateSelection(); updateModelOptions(); loadFreeThrows(); refreshTrainingContext(); });
+  $('season').addEventListener('change', () => { state.season = $('season').value; invalidateSelection(); updateModelOptions(); loadFreeThrows(); refreshTrainingContext(); ensureSelectedModel(); });
+  $('prepare-model-button').addEventListener('click', () => ensureSelectedModel(true));
   $('model-select').addEventListener('change', () => selectModel(state.models.find((m) => m.model_id === $('model-select').value) || null));
   $('show-training').addEventListener('click', () => { const hidden = !$('training-panel').hidden; $('training-panel').hidden = hidden; $('show-training').setAttribute('aria-expanded', String(!hidden)); });
   $('training-form').addEventListener('submit', startTraining);
@@ -554,7 +666,8 @@ function bindEvents() {
 
 async function initialize() {
   bindEvents(); drawMarker();
-  const [healthResult, seasonsResult, modelsResult] = await Promise.allSettled([api('/health'), api('/seasons'), api('/models')]);
+  const [healthResult, seasonsResult, modelsResult, sessionResult] = await Promise.allSettled([api('/health'), api('/seasons'), api('/models'), api('/session')]);
+  if (sessionResult.status === 'fulfilled') state.session = sessionResult.value;
   if (healthResult.status === 'fulfilled') {
     state.trainingEnabled = Boolean(healthResult.value.training_enabled);
     $('system-status').classList.add('online');
@@ -582,6 +695,8 @@ async function initialize() {
   else if (seasonsResult.status === 'rejected') showMessage(`Season choices could not be loaded. ${seasonsResult.reason.message}`);
   updateModelOptions(initialModel?.model_id);
   refreshTrainingContext(); loadFreeThrows();
+  if (initialModel) selectPlayer(state.player);
+  else preparationStatus('Search for a player to load their available seasons.');
 }
 
 initialize();

@@ -41,6 +41,7 @@ class Settings:
     cache_ttl_seconds: int = 86400
     cors_origins: tuple[str, ...] = ()
     allow_stale_cache: bool = True
+    local_player_models: bool = False
 
     def __post_init__(self):
         object.__setattr__(self, "model_dir", Path(self.model_dir))
@@ -57,7 +58,7 @@ class Settings:
             raise ValueError("CORS origins must be explicit http(s) origins without paths or wildcards.")
 
     @classmethod
-    def from_env(cls):
+    def from_env(cls, *, local_default: bool = False):
         return cls(
             model_dir=Path(os.getenv("NBA_MODEL_DIR", str(ROOT / "models"))),
             cache_dir=Path(os.getenv("NBA_CACHE_DIR", str(ROOT / "data/cache"))),
@@ -68,4 +69,5 @@ class Settings:
             cache_ttl_seconds=int(os.getenv("NBA_CACHE_TTL_SECONDS", "86400")),
             cors_origins=tuple(v.strip() for v in os.getenv("NBA_CORS_ORIGINS", "").split(",") if v.strip()),
             allow_stale_cache=_boolean("NBA_ALLOW_STALE_CACHE", True),
+            local_player_models=_boolean("NBA_LOCAL_PLAYER_MODELS", local_default),
         )

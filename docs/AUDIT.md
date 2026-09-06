@@ -31,6 +31,12 @@ The original phase 1 script does compare log loss with a training-set mean basel
 5. Replace the embedded interface with a responsive dashboard, shared court dimensions, keyboard controls, batch heatmap, explanations, model/data provenance, and selected-season free throws.
 6. Run offline tests and a clearly labeled synthetic smoke evaluation; attempt real NBA retrieval separately and disclose any unavailable real-data comparisons.
 
+## Dashboard refinement audit — September 2026
+
+The initial standalone dashboard used an oversized promotional heading, very small supporting labels, neon accents, decorative gradients, and repeated bordered cards. Manual training was prominent, while selecting a player without a saved model led to a dead end. The stylesheet was compressed into long lines, making component changes harder to review.
+
+The revision establishes shared neutral/blue tokens, system typography, consistent 44-pixel controls and 6-pixel radii, and flatter sections separated by rules. Navigation wraps on mobile; evaluation tables remain keyboard-scrollable. Focus, disabled, empty, loading, and failure states are explicit. The court geometry, predictions, heatmap, explanations, historical free throws, evaluation, and advanced training controls remain available. Missing player models now prepare on demand for the exact selected season, with bounded progress tracking and clear unavailable-data messages.
+
 ## Geometry references
 
 The official NBA rule defines a 23-foot-9-inch arc joined to straight segments three feet inside each sideline. The implementation derives the segment/arc junction rather than approximating it. See [NBA Rule 1: Court Dimensions and Equipment](https://official.nba.com/rule-no-1-court-dimensions-equipment/).

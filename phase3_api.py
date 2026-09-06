@@ -2,8 +2,9 @@
 import logging
 
 from nba_app.api import create_app
+from nba_app.config import Settings
 
-app = create_app()
+app = create_app(Settings.from_env(local_default=True))
 
 if __name__ == "__main__":
     import uvicorn
