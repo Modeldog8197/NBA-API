@@ -3,6 +3,9 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
+const deployment = typeof window !== 'undefined' && window.NBA_DEPLOYMENT
+  ? window.NBA_DEPLOYMENT : { mode: 'local', apiBaseUrl: '' };
+const apiUrl = path => `${deployment.apiBaseUrl.replace(/\/+$/, '')}${path}`;
 const state = {
   models: [], player: null, model: null, season: '', location: { x: 0, y: 150 },
   generation: 0, predictionSequence: 0, ftSequence: 0, heatmapSequence: 0,
@@ -42,7 +45,7 @@ async function api(path, options = {}, channel) {
   if (channel) state.controllers[channel] = controller;
   const timeout = setTimeout(() => controller.abort('timeout'), path.includes('freethrow') ? 60000 : 45000);
   try {
-    const response = await fetch(path, { ...options, signal: controller.signal, headers: { Accept: 'application/json', ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers } });
+    const response = await fetch(apiUrl(path), { ...options, signal: controller.signal, headers: { Accept: 'application/json', ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers } });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const detail = data.detail;
@@ -411,7 +414,7 @@ function renderMetadata(model) {
   const bins = modelMetrics?.calibration_bins;
   renderCalibration(target, bins);
   const link = element('a', 'evaluation-note', 'View full model record ↗');
-  link.href = `/models/${encodeURIComponent(model.model_id)}`; link.target = '_blank'; link.rel = 'noopener'; link.style.display = 'inline-block';
+  link.href = apiUrl(`/models/${encodeURIComponent(model.model_id)}`); link.target = '_blank'; link.rel = 'noopener'; link.style.display = 'inline-block';
   target.append(link);
 }
 
@@ -714,6 +717,22 @@ function bindEvents() {
 
 async function initialize() {
   bindEvents(); drawMarker();
+  document.querySelectorAll('[data-api-path]').forEach(link => {
+    link.href = apiUrl(link.dataset.apiPath);
+    link.hidden = deployment.mode === 'pages' && !deployment.apiBaseUrl;
+  });
+  if (deployment.mode === 'pages' && !deployment.apiBaseUrl) {
+    $('system-status').replaceChildren(element('span', 'status-dot'), document.createTextNode('AWAITING LIVE SERVICE'));
+    showMessage('The dashboard is published. Live predictions and player data will be available once its server is connected.');
+    $('player-search').disabled = true;
+    $('player-help').textContent = 'Live player search is not connected yet.';
+    $('season').disabled = true; $('model-select').disabled = true;
+    $('season').replaceChildren(element('option', '', 'Not connected'));
+    $('model-select').replaceChildren(element('option', '', 'Not connected'));
+    preparationStatus('Live player data is not connected yet.');
+    refreshTrainingContext();
+    return;
+  }
   const [healthResult, seasonsResult, modelsResult, sessionResult] = await Promise.allSettled([api('/health'), api('/seasons'), api('/models'), api('/session')]);
   if (sessionResult.status === 'fulfilled') state.session = sessionResult.value;
   if (healthResult.status === 'fulfilled') {

@@ -6,15 +6,16 @@
     <meta name="theme-color" content="#f6f7f9">
     <meta name="description" content="Explore basketball shot probabilities with an interactive NBA court, transparent model evaluation, and explainable predictions.">
     <title>NBA API — Shot analysis</title>
-    <link rel="stylesheet" href="/static/styles.css?v=4.2.0">
-    <script src="/static/app.js?v=4.2.0" defer>
+    <link rel="stylesheet" href="./static/styles.css?v=4.3.0">
+    <script src="./static/runtime-config.js?v=4.3.0" defer></script>
+    <script src="./static/app.js?v=4.3.0" defer>
     </script>
   </head>
   <body>
     <a class="skip-link" href="#workbench">Skip to shot analysis</a>
     <header class="site-header">
       <div class="header-inner">
-        <a class="brand" href="/" aria-label="NBA API home">
+        <a class="brand" href="./" aria-label="NBA API home">
           <svg viewBox="0 0 28 28" aria-hidden="true">
             <rect x="2" y="2" width="24" height="24" rx="4"/>
             <path d="M8 7v14M20 7v14M8 14h12M11 7h6v7h-6z"/>
@@ -25,7 +26,7 @@
         <nav aria-label="Main navigation">
           <a href="#workbench" class="nav-link">Shot analysis</a>
           <a href="#model-details">Model &amp; data</a>
-          <a href="/docs" target="_blank" rel="noopener" aria-label="API docs (opens in a new tab)">API docs <span aria-hidden="true">↗</span>
+          <a href="/docs" data-api-path="/docs" target="_blank" rel="noopener" aria-label="API docs (opens in a new tab)">API docs <span aria-hidden="true">↗</span>
           </a>
         </nav>
         <span class="system-status" id="system-status" role="status">
@@ -307,7 +308,7 @@
             <h3>No saved model for this selection</h3>
             <p>Choose a player and season, then use <strong>Prepare player model</strong> when available. Advanced training is available below for server administrators. For offline exploration, the README includes instructions for a clearly labeled synthetic demo.</p>
           </div>
-          <a class="button button-outline" href="/docs" target="_blank" rel="noopener" aria-label="API documentation (opens in a new tab)">API documentation ↗</a>
+          <a class="button button-outline" href="/docs" data-api-path="/docs" target="_blank" rel="noopener" aria-label="API documentation (opens in a new tab)">API documentation ↗</a>
         </div>
       </section>
       <section class="advanced-section" aria-label="Advanced model management">
@@ -340,7 +341,7 @@
         </section>
       </section>
       <footer>
-        <a class="footer-brand" href="/">NBA API</a>
+        <a class="footer-brand" href="./">NBA API</a>
         <span>Independent project · Not affiliated with the NBA</span>
       </footer>
     </main>

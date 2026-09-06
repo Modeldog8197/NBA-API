@@ -36,6 +36,14 @@ assert.match(textOf(nodes.get('evaluation-content')), /60 shots fit the model/);
 assert.match(textOf(nodes.get('evaluation-content')), /CALIBRATION/);
 
 (async () => {
+  let requestedUrl;
+  context.fetch = async url => { requestedUrl = url; return {ok:true,json:async()=>({status:'ok'})}; };
+  run(`deployment.apiBaseUrl='https://api.example.org/nba/';`);
+  await run(`api('/health')`);
+  assert.equal(requestedUrl, 'https://api.example.org/nba/health', 'Pages requests use the configured backend, including its path prefix');
+  run(`deployment.apiBaseUrl='';`);
+  await run(`api('/health')`);
+  assert.equal(requestedUrl, '/health', 'Local requests remain on the FastAPI origin');
   let finish;
   context.fetch = () => new Promise(resolve => { finish = resolve; });
   run(`state.model={model_id:'old-model',player_name:'Old player',season:'2023-24'}; state.location={x:0,y:100};`);

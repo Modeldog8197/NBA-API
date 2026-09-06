@@ -155,6 +155,14 @@ curl http://localhost:8000/models/preparation/JOB_ID_FROM_PREPARE
 
 An existing validated bundle returns `status: "done"`, its `model_id`, and `job_id: null`. Otherwise, poll the returned job ID until `done`, `unavailable`, or `error`. Intermediate states are `queued`, `fetching`, `training`, `evaluating`, and `publishing`. Only a successful result supplies a model ID for prediction. Job responses always identify the requested player and season.
 
+## GitHub Pages dashboard
+
+GitHub Pages publishes the actual dashboard using `.github/workflows/pages.yml`, rather than building the repository README with Jekyll. The deployment packages only `index.html`, the dashboard assets, and public runtime configuration. Asset and home links work under `/NBA-API/`.
+
+Pages cannot run the Python API. For public predictions and player data, host the FastAPI application separately and configure the repository Actions variable `NBA_API_URL` with its public HTTPS base URL. Set `NBA_CORS_ORIGINS=https://modeldog8197.github.io` on that backend, then rerun **Deploy dashboard to Pages**. Requests, model records, and API documentation links use that configured server. Do not put secrets in `NBA_API_URL`; the existing protected training key is entered separately when required.
+
+Without a public backend URL, the published dashboard explicitly shows that its live service is not connected, and does not send failing requests to GitHub Pages or redirect visitors to their own localhost. The local `python phase3_api.py` workflow continues to use the same-origin API automatically.
+
 ## Configuration and hosted retraining
 
 Settings are validated at startup. Configure through environment variables:
