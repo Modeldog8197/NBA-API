@@ -157,6 +157,10 @@ An existing validated bundle returns `status: "done"`, its `model_id`, and `job_
 
 ## GitHub Pages dashboard
 
+The repository includes a `render.yaml` Blueprint for a **free** Render Python web service. It installs the CPU-only XGBoost runtime, starts one API worker on Render's assigned port, allows the Pages origin, and generates a private training key on Render. Deploy this Blueprint from your Render account, then set the resulting HTTPS service URL as `NBA_API_URL` in GitHub Actions variables and rerun the Pages workflow. The Render URL also serves the complete dashboard directly.
+
+The included evaluated models remain available from the Git checkout. Render's free filesystem is temporary: newly prepared models and NBA caches are lost on restart or idle spin-down. Additional model preparation uses the generated server key through Advanced controls; never publish that key in Pages configuration. Public prediction and historical-statistics endpoints do not require the training key. Upstream NBA access and free-instance resource limits still need checking during deployment.
+
 GitHub Pages publishes the actual dashboard using `.github/workflows/pages.yml`, rather than building the repository README with Jekyll. The deployment packages only `index.html`, the dashboard assets, and public runtime configuration. Asset and home links work under `/NBA-API/`.
 
 Pages cannot run the Python API. For public predictions and player data, host the FastAPI application separately and configure the repository Actions variable `NBA_API_URL` with its public HTTPS base URL. Set `NBA_CORS_ORIGINS=https://modeldog8197.github.io` on that backend, then rerun **Deploy dashboard to Pages**. Requests, model records, and API documentation links use that configured server. Do not put secrets in `NBA_API_URL`; the existing protected training key is entered separately when required.
