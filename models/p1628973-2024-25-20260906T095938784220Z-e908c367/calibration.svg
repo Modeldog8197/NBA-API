@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="580" viewBox="0 0 800 580" role="img" aria-label="Final test calibration plot">
+<rect width="800" height="580" fill="white"/>
+<g font-family="sans-serif" fill="#0f172a">
+<text x="60" y="35" font-size="22">Final-test probability calibration</text>
+<text x="60" y="58" font-size="13">Held-out later games; each point is a populated probability bin</text>
+<path d="M70 480H490 M70 480V80" fill="none" stroke="#334155"/>
+<path d="M70 480L490 80" stroke="#94a3b8" stroke-dasharray="5 5"/>
+<text x="70.0" y="503" text-anchor="middle" font-size="12">0.0</text>
+<text x="55" y="484.0" text-anchor="end" font-size="12">0.0</text>
+<text x="154.0" y="503" text-anchor="middle" font-size="12">0.2</text>
+<text x="55" y="404.0" text-anchor="end" font-size="12">0.2</text>
+<text x="238.0" y="503" text-anchor="middle" font-size="12">0.4</text>
+<text x="55" y="324.0" text-anchor="end" font-size="12">0.4</text>
+<text x="322.0" y="503" text-anchor="middle" font-size="12">0.6</text>
+<text x="55" y="244.0" text-anchor="end" font-size="12">0.6</text>
+<text x="406.0" y="503" text-anchor="middle" font-size="12">0.8</text>
+<text x="55" y="164.0" text-anchor="end" font-size="12">0.8</text>
+<text x="490.0" y="503" text-anchor="middle" font-size="12">1.0</text>
+<text x="55" y="84.0" text-anchor="end" font-size="12">1.0</text>
+<polyline points="272.27,287.23" stroke="#64748b" fill="none" stroke-width="2"/>
+<circle cx="272.27" cy="287.23" r="4" fill="#64748b"><title>n=249</title></circle>
+<rect x="520" y="100" width="10" height="10" fill="#64748b"/>
+<text x="538" y="110" font-size="12">constant baseline (selected)</text>
+<polyline points="103.46,280.00 136.20,340.87 173.72,305.00 216.86,362.35 259.74,256.47 303.67,237.14 345.27,233.85 384.65,242.96 423.78,374.74 461.46,213.33" stroke="#ea580c" fill="none" stroke-width="2"/>
+<circle cx="103.46" cy="280.00" r="4" fill="#ea580c"><title>n=10</title></circle>
+<circle cx="136.20" cy="340.87" r="4" fill="#ea580c"><title>n=23</title></circle>
+<circle cx="173.72" cy="305.00" r="4" fill="#ea580c"><title>n=32</title></circle>
+<circle cx="216.86" cy="362.35" r="4" fill="#ea580c"><title>n=34</title></circle>
+<circle cx="259.74" cy="256.47" r="4" fill="#ea580c"><title>n=34</title></circle>
+<circle cx="303.67" cy="237.14" r="4" fill="#ea580c"><title>n=28</title></circle>
+<circle cx="345.27" cy="233.85" r="4" fill="#ea580c"><title>n=39</title></circle>
+<circle cx="384.65" cy="242.96" r="4" fill="#ea580c"><title>n=27</title></circle>
+<circle cx="423.78" cy="374.74" r="4" fill="#ea580c"><title>n=19</title></circle>
+<circle cx="461.46" cy="213.33" r="4" fill="#ea580c"><title>n=3</title></circle>
+<rect x="520" y="135" width="10" height="10" fill="#ea580c"/>
+<text x="538" y="145" font-size="12">original xgboost</text>
+<polyline points="151.30,380.00 173.33,372.31 221.22,302.22 255.61,296.22 303.63,261.82 339.60,242.16 379.49,266.67 414.98,80.00" stroke="#0891b2" fill="none" stroke-width="2"/>
+<circle cx="151.30" cy="380.00" r="4" fill="#0891b2"><title>n=4</title></circle>
+<circle cx="173.33" cy="372.31" r="4" fill="#0891b2"><title>n=26</title></circle>
+<circle cx="221.22" cy="302.22" r="4" fill="#0891b2"><title>n=72</title></circle>
+<circle cx="255.61" cy="296.22" r="4" fill="#0891b2"><title>n=37</title></circle>
+<circle cx="303.63" cy="261.82" r="4" fill="#0891b2"><title>n=55</title></circle>
+<circle cx="339.60" cy="242.16" r="4" fill="#0891b2"><title>n=37</title></circle>
+<circle cx="379.49" cy="266.67" r="4" fill="#0891b2"><title>n=15</title></circle>
+<circle cx="414.98" cy="80.00" r="4" fill="#0891b2"><title>n=3</title></circle>
+<rect x="520" y="170" width="10" height="10" fill="#0891b2"/>
+<text x="538" y="180" font-size="12">candidate xgboost</text>
+<text x="280" y="537" text-anchor="middle" font-size="15">Mean predicted make probability</text>
+<text transform="translate(20 280) rotate(-90)" text-anchor="middle" font-size="15">Observed make fraction</text>
+<text x="60" y="566" font-size="12">No error bands: uncertainty intervals have not been evaluated.</text></g></svg>

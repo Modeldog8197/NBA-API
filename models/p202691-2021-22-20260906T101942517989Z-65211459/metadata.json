@@ -1,0 +1,644 @@
+{
+  "schema_version": 1,
+  "model_id": "p202691-2021-22-20260906T101942517989Z-65211459",
+  "created_at": "2026-09-06T10:19:42.517989+00:00",
+  "player_id": 202691,
+  "player_name": "Klay Thompson",
+  "season": "2021-22",
+  "seasons": [
+    "2021-22"
+  ],
+  "n_shots": 570,
+  "n_games": 32,
+  "source": "nba",
+  "data_source": {
+    "source": "nba",
+    "retrieval": "live_nba",
+    "stale": false,
+    "fetched_at": "2026-09-06T10:19:41.790474+00:00",
+    "sha256": "7b6c32f6f3d12557540917193347b3935b8dcfc503a6399b00abf78481480422",
+    "endpoint_key": "shots-202691-2021-22-regular-v1",
+    "season_type": "Regular Season"
+  },
+  "is_demo": false,
+  "data_sha256": "f28ac729027cf2dcabfc0a9422b050fd8eabaeb0fe8390a2132f94cfc557d2f6",
+  "cleaning": {
+    "input_rows": 573,
+    "invalid_rows": 0,
+    "duplicate_rows": 0,
+    "conflicting_duplicate_rows": 0,
+    "geometry_conflicts": 2,
+    "out_of_court_rows": 1,
+    "derived_shot_types": 0,
+    "distance_policy": "Recompute Euclidean feet from LOC_X/LOC_Y; ignore rounded source SHOT_DISTANCE.",
+    "output_rows": 570,
+    "dropped_rows": 3
+  },
+  "feature_cols": [
+    "LOC_X",
+    "LOC_Y",
+    "SHOT_DISTANCE",
+    "SHOT_TYPE_ENC",
+    "SHOT_ANGLE",
+    "SHOT_ANGLE_ABS"
+  ],
+  "feature_version": "geometry-six-features-v1",
+  "court_version": "nba-halfcourt-v1",
+  "shot_type_encoding": {
+    "2pt": 0,
+    "3pt": 1
+  },
+  "coordinate_units": "tenths of a foot; basket (0,0); x right, y toward half court",
+  "selected_model": "constant_baseline",
+  "model_kind": "constant",
+  "constant_probability": 0.41007194244604317,
+  "calibration": {
+    "method": "none",
+    "slope": 1.0,
+    "intercept": 0.0
+  },
+  "calibration_notes": [],
+  "split": {
+    "strategy": "chronological games; 60% train, 20% validation, 20% final test by game count; early half of validation fits calibration, later half selects model",
+    "rounding": "floor train and validation game counts; remainder final test",
+    "train": {
+      "n_shots": 276,
+      "n_games": 19,
+      "start_date": "2022-01-09",
+      "end_date": "2022-03-05",
+      "game_ids": [
+        "0022100604",
+        "0022100614",
+        "0022100627",
+        "0022100652",
+        "0022100667",
+        "0022100683",
+        "0022100720",
+        "0022100734",
+        "0022100750",
+        "0022100764",
+        "0022100785",
+        "0022100813",
+        "0022100837",
+        "0022100854",
+        "0022100866",
+        "0022100883",
+        "0022100894",
+        "0022100943",
+        "0022100959"
+      ],
+      "made": 113
+    },
+    "calibration": {
+      "n_shots": 67,
+      "n_games": 3,
+      "start_date": "2022-03-08",
+      "end_date": "2022-03-12",
+      "game_ids": [
+        "0022100980",
+        "0022100994",
+        "0022101008"
+      ],
+      "made": 31
+    },
+    "validation": {
+      "n_shots": 65,
+      "n_games": 3,
+      "start_date": "2022-03-14",
+      "end_date": "2022-03-20",
+      "game_ids": [
+        "0022101025",
+        "0022101042",
+        "0022101070"
+      ],
+      "made": 24
+    },
+    "final_test": {
+      "n_shots": 162,
+      "n_games": 7,
+      "start_date": "2022-03-22",
+      "end_date": "2022-04-10",
+      "game_ids": [
+        "0022101080",
+        "0022101102",
+        "0022101117",
+        "0022101145",
+        "0022101165",
+        "0022101202",
+        "0022101225"
+      ],
+      "made": 77
+    }
+  },
+  "parameters": {
+    "original_xgboost": {
+      "objective": "binary:logistic",
+      "eval_metric": "logloss",
+      "random_state": 42,
+      "n_jobs": 2,
+      "tree_method": "hist",
+      "n_estimators": 300,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8
+    },
+    "candidate_xgboost": {
+      "objective": "binary:logistic",
+      "eval_metric": "logloss",
+      "random_state": 42,
+      "n_jobs": 2,
+      "tree_method": "hist",
+      "n_estimators": 240,
+      "max_depth": 3,
+      "learning_rate": 0.035,
+      "min_child_weight": 12,
+      "reg_lambda": 8.0,
+      "reg_alpha": 0.25,
+      "subsample": 0.9,
+      "colsample_bytree": 1.0
+    },
+    "constant_baseline": {
+      "method": "Laplace-smoothed train make rate",
+      "alpha": 1
+    },
+    "sigmoid": {
+      "C": 1.0,
+      "solver": "lbfgs",
+      "max_iter": 1000
+    }
+  },
+  "evaluation": {
+    "validation": {
+      "constant_baseline": {
+        "n_shots": 65,
+        "make_rate": 0.36923076923076925,
+        "roc_auc": 0.5,
+        "log_loss": 0.6620320936558675,
+        "brier_score": 0.2345674097136237,
+        "calibration_bins": [
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 65,
+            "predicted": 0.4100719424460432,
+            "observed": 0.36923076923076925
+          }
+        ]
+      },
+      "original_xgboost": {
+        "n_shots": 65,
+        "make_rate": 0.36923076923076925,
+        "roc_auc": 0.47408536585365857,
+        "log_loss": 0.9114587424133986,
+        "brier_score": 0.30774186080425087,
+        "calibration_bins": [
+          {
+            "lower": 0.0,
+            "upper": 0.1,
+            "count": 10,
+            "predicted": 0.06764159366826865,
+            "observed": 0.5
+          },
+          {
+            "lower": 0.1,
+            "upper": 0.2,
+            "count": 16,
+            "predicted": 0.1504337021710669,
+            "observed": 0.25
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.3,
+            "count": 11,
+            "predicted": 0.24048235565846035,
+            "observed": 0.5454545454545454
+          },
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 5,
+            "predicted": 0.34822035285432473,
+            "observed": 0.2
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 5,
+            "predicted": 0.4422049374342942,
+            "observed": 0.2
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 4,
+            "predicted": 0.5482288851946739,
+            "observed": 0.0
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "count": 4,
+            "predicted": 0.6444958265268973,
+            "observed": 0.5
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.8,
+            "count": 5,
+            "predicted": 0.7505215820699539,
+            "observed": 0.8
+          },
+          {
+            "lower": 0.8,
+            "upper": 0.9,
+            "count": 3,
+            "predicted": 0.8491667823414201,
+            "observed": 0.3333333333333333
+          },
+          {
+            "lower": 0.9,
+            "upper": 1.0,
+            "count": 2,
+            "predicted": 0.9415268415700631,
+            "observed": 0.0
+          }
+        ]
+      },
+      "original_sigmoid": {
+        "n_shots": 65,
+        "make_rate": 0.36923076923076925,
+        "roc_auc": 0.47408536585365857,
+        "log_loss": 0.7059034344557548,
+        "brier_score": 0.25579369373710686,
+        "calibration_bins": [
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 11,
+            "predicted": 0.36587824223805926,
+            "observed": 0.5454545454545454
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 31,
+            "predicted": 0.4399750352853881,
+            "observed": 0.3225806451612903
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 18,
+            "predicted": 0.5467809958155292,
+            "observed": 0.3888888888888889
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "count": 5,
+            "predicted": 0.6485908768573141,
+            "observed": 0.2
+          }
+        ]
+      },
+      "candidate_xgboost": {
+        "n_shots": 65,
+        "make_rate": 0.36923076923076925,
+        "roc_auc": 0.3836382113821138,
+        "log_loss": 0.7378043007257791,
+        "brier_score": 0.26580978163757113,
+        "calibration_bins": [
+          {
+            "lower": 0.1,
+            "upper": 0.2,
+            "count": 3,
+            "predicted": 0.19275134016304973,
+            "observed": 0.6666666666666666
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.3,
+            "count": 20,
+            "predicted": 0.24149893424189733,
+            "observed": 0.6
+          },
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 18,
+            "predicted": 0.3512350202795967,
+            "observed": 0.1111111111111111
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 10,
+            "predicted": 0.44074835771143467,
+            "observed": 0.2
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 11,
+            "predicted": 0.5333020062236696,
+            "observed": 0.36363636363636365
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "count": 2,
+            "predicted": 0.6591729954890644,
+            "observed": 0.5
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.8,
+            "count": 1,
+            "predicted": 0.7210905057605493,
+            "observed": 1.0
+          }
+        ]
+      },
+      "candidate_sigmoid": {
+        "n_shots": 65,
+        "make_rate": 0.36923076923076925,
+        "roc_auc": 0.3836382113821138,
+        "log_loss": 0.6899667646451918,
+        "brier_score": 0.24833025337643524,
+        "calibration_bins": [
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 1,
+            "predicted": 0.39559787784206557,
+            "observed": 1.0
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 50,
+            "predicted": 0.44414250422043544,
+            "observed": 0.34
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 14,
+            "predicted": 0.518705634422936,
+            "observed": 0.42857142857142855
+          }
+        ]
+      }
+    },
+    "final_test": {
+      "constant_baseline": {
+        "n_shots": 162,
+        "make_rate": 0.47530864197530864,
+        "roc_auc": 0.5,
+        "log_loss": 0.7006092192990752,
+        "brier_score": 0.2536461638043682,
+        "calibration_bins": [
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 162,
+            "predicted": 0.4100719424460432,
+            "observed": 0.47530864197530864
+          }
+        ]
+      },
+      "original_xgboost": {
+        "n_shots": 162,
+        "make_rate": 0.47530864197530864,
+        "roc_auc": 0.5233002291825821,
+        "log_loss": 0.8756981770346773,
+        "brier_score": 0.3109080414099119,
+        "calibration_bins": [
+          {
+            "lower": 0.0,
+            "upper": 0.1,
+            "count": 13,
+            "predicted": 0.07194806544829643,
+            "observed": 0.38461538461538464
+          },
+          {
+            "lower": 0.1,
+            "upper": 0.2,
+            "count": 40,
+            "predicted": 0.14728490649347342,
+            "observed": 0.525
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.3,
+            "count": 28,
+            "predicted": 0.23455454883776247,
+            "observed": 0.39285714285714285
+          },
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 17,
+            "predicted": 0.34967543714615074,
+            "observed": 0.47058823529411764
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 9,
+            "predicted": 0.43538521152943765,
+            "observed": 0.2222222222222222
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 20,
+            "predicted": 0.549401865115383,
+            "observed": 0.55
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "count": 13,
+            "predicted": 0.6600247250082337,
+            "observed": 0.6153846153846154
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.8,
+            "count": 9,
+            "predicted": 0.7664019312056114,
+            "observed": 0.6666666666666666
+          },
+          {
+            "lower": 0.8,
+            "upper": 0.9,
+            "count": 8,
+            "predicted": 0.8453114944934934,
+            "observed": 0.25
+          },
+          {
+            "lower": 0.9,
+            "upper": 1.0,
+            "count": 5,
+            "predicted": 0.9239376062406078,
+            "observed": 0.6
+          }
+        ]
+      },
+      "original_sigmoid": {
+        "n_shots": 162,
+        "make_rate": 0.47530864197530864,
+        "roc_auc": 0.5233002291825821,
+        "log_loss": 0.6972336183736815,
+        "brier_score": 0.2519508968575341,
+        "calibration_bins": [
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 23,
+            "predicted": 0.37807612015364456,
+            "observed": 0.5217391304347826
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 76,
+            "predicted": 0.4462221863403982,
+            "observed": 0.4342105263157895
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 46,
+            "predicted": 0.542659005310836,
+            "observed": 0.5434782608695652
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "count": 17,
+            "predicted": 0.6312431924160791,
+            "observed": 0.4117647058823529
+          }
+        ]
+      },
+      "candidate_xgboost": {
+        "n_shots": 162,
+        "make_rate": 0.47530864197530864,
+        "roc_auc": 0.5574484339190222,
+        "log_loss": 0.7112342154867264,
+        "brier_score": 0.2574163177755539,
+        "calibration_bins": [
+          {
+            "lower": 0.1,
+            "upper": 0.2,
+            "count": 4,
+            "predicted": 0.1812511545518563,
+            "observed": 0.25
+          },
+          {
+            "lower": 0.2,
+            "upper": 0.3,
+            "count": 41,
+            "predicted": 0.25632838126699303,
+            "observed": 0.43902439024390244
+          },
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 31,
+            "predicted": 0.35141182108144453,
+            "observed": 0.45161290322580644
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 57,
+            "predicted": 0.4370705482884181,
+            "observed": 0.43859649122807015
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 13,
+            "predicted": 0.5449917745004795,
+            "observed": 0.7692307692307693
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "count": 10,
+            "predicted": 0.6361030891609314,
+            "observed": 0.5
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.8,
+            "count": 6,
+            "predicted": 0.74822215216258,
+            "observed": 0.6666666666666666
+          }
+        ]
+      },
+      "candidate_sigmoid": {
+        "n_shots": 162,
+        "make_rate": 0.47530864197530864,
+        "roc_auc": 0.5574484339190222,
+        "log_loss": 0.6857739843282867,
+        "brier_score": 0.24633979238934275,
+        "calibration_bins": [
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "count": 2,
+            "predicted": 0.3868115079924111,
+            "observed": 0.0
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "count": 131,
+            "predicted": 0.45636682107677945,
+            "observed": 0.44274809160305345
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "count": 29,
+            "predicted": 0.5351723785264654,
+            "observed": 0.6551724137931034
+          }
+        ]
+      }
+    },
+    "selection_metric": "later-validation log_loss",
+    "selected_model": "constant_baseline",
+    "selected_minus_original_test_log_loss": -0.17508895773560218,
+    "selected_minus_constant_test_log_loss": 0.0,
+    "interpretation": "A single held-out season split; loss differences are descriptive, not a statistical significance or future-performance guarantee.",
+    "original_comparison": "Original estimator settings retrained with corrected shared geometry and chronological splits; unverified legacy artifact is not evaluated."
+  },
+  "dependency_versions": {
+    "python": "3.12.14",
+    "numpy": "2.5.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.0",
+    "xgboost": "3.4.1",
+    "nba_api": "1.11.4"
+  },
+  "random_seed": 42,
+  "limitations": [
+    "Uses shot location only: no defender distance, fatigue, shot clock, injuries, or live game context.",
+    "Point locations are quantized and cannot establish the shooter's feet near the three-point line; conflicting source labels are excluded.",
+    "Only half-court field goals are supported; full-court heaves and free throws are excluded.",
+    "Player-season samples may be sparse in parts of the court; heatmaps extrapolate there.",
+    "No evaluated statistical uncertainty interval is available.",
+    "Models are not refit on validation or final-test games after selection; recorded train samples are the actual fit data."
+  ],
+  "files": {
+    "test_predictions.csv": "102a9a9042768878484bc48120644f6fc1fce881432160c6417092947ebe6433",
+    "calibration.svg": "9713feee49804d71e4ed2ad035d65bcfea73bfdbf00e1e21f0a6cb92f1a54ac3"
+  }
+}

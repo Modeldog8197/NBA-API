@@ -171,3 +171,41 @@ def test_invalid_configuration_fails_early(overrides):
 
 def test_valid_season_rollover():
     assert validate_season("1999-00") == "1999-00"
+
+
+@pytest.mark.parametrize("days,stale", [(0, False), (5, True)])
+def test_hosted_snapshot_preserves_age_and_never_calls_nba(tmp_path, days, stale):
+    key = "shots-201939-2023-24-regular-v1"
+    payload = {"key": key, "fetched_at": (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(),
+               "records": [{"PLAYER_ID": 201939, "LOC_X": 10, "LOC_Y": 20}]}
+    (tmp_path / f"{key}.json").write_text(json.dumps(payload), encoding="utf-8")
+    loader = Mock(side_effect=AssertionError("Hosted snapshots must not call NBA"))
+    client = NBADataClient(Settings(cache_dir=tmp_path, snapshot_only=True))
+    rows, provenance = client._cached_request(key, loader)
+    assert rows.iloc[0]["PLAYER_ID"] == 201939
+    assert provenance["retrieval"] == "saved_snapshot"
+    assert provenance["stale"] is stale
+    assert provenance["fetched_at"] == payload["fetched_at"]
+    loader.assert_not_called()
+
+
+@pytest.mark.parametrize("content", [None, "{broken", '{"key":"wrong","records":[]}'])
+def test_hosted_missing_or_corrupt_snapshot_fails_without_network(tmp_path, content):
+    if content is not None:
+        (tmp_path / "test.json").write_text(content, encoding="utf-8")
+    loader = Mock()
+    client = NBADataClient(Settings(cache_dir=tmp_path, snapshot_only=True))
+    with pytest.raises(DataUnavailableError, match="No eligible snapshot"):
+        client._cached_request("test", loader)
+    loader.assert_not_called()
+
+
+def test_hosted_snapshot_respects_strict_staleness_setting(tmp_path):
+    payload = {"key": "test", "fetched_at": (datetime.now(timezone.utc) - timedelta(days=5)).isoformat(),
+               "records": [{"value": 1}]}
+    (tmp_path / "test.json").write_text(json.dumps(payload), encoding="utf-8")
+    loader = Mock()
+    client = NBADataClient(Settings(cache_dir=tmp_path, snapshot_only=True, allow_stale_cache=False))
+    with pytest.raises(DataUnavailableError, match="No eligible snapshot"):
+        client._cached_request("test", loader)
+    loader.assert_not_called()

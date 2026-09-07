@@ -55,10 +55,19 @@ class NBADataClient:
                 raise ValueError("Cache timestamp must have a timezone")
             cached = payload
             age = (datetime.now(UTC) - fetched).total_seconds()
+            if self.settings.snapshot_only and age >= 0:
+                stale = age > self.settings.cache_ttl_seconds
+                if not stale or self.settings.allow_stale_cache:
+                    return pd.DataFrame(cached["records"], columns=cached.get("columns")), self._provenance(cached, "saved_snapshot", stale)
             if 0 <= age <= self.settings.cache_ttl_seconds:
                 return pd.DataFrame(cached["records"], columns=cached.get("columns")), self._provenance(cached, "cache", False)
         except (OSError, ValueError, TypeError, KeyError):
             pass
+        if self.settings.snapshot_only:
+            raise DataUnavailableError(
+                "This hosted service uses saved NBA data. No eligible snapshot is available for this "
+                "player or season. Choose a season with a saved model, or ask the owner to publish new NBA data."
+            )
         error = None
         for attempt in range(self.settings.retries + 1):
             try:

@@ -14,6 +14,10 @@ services:
         value: https://modeldog8197.github.io
       - key: NBA_LOCAL_PLAYER_MODELS
         value: "false"
+      - key: NBA_CACHE_DIR
+        value: reference_data
+      - key: NBA_SNAPSHOT_ONLY
+        value: "true"
       - key: NBA_TRAINING_ENABLED
         value: "true"
       - key: NBA_TRAINING_API_KEY

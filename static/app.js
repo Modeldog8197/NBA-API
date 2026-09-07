@@ -27,6 +27,13 @@ const fixed = (v, digits = 3) => finite(v) ? Number(v).toFixed(digits) : '—';
 const percentage = (v) => finite(v) ? `${(Number(v) * 100).toFixed(1)}%` : '—';
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
+function dataSnapshotNote(provenance) {
+  if (provenance?.retrieval === 'saved_snapshot') {
+    return ` Saved NBA snapshot from ${provenance.fetched_at.slice(0, 10)}; not a live feed.`;
+  }
+  return provenance?.stale ? ' Using stale cached NBA data.' : '';
+}
+
 function element(tag, className, content) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -43,7 +50,7 @@ async function api(path, options = {}, channel) {
   if (channel) abort(channel);
   const controller = new AbortController();
   if (channel) state.controllers[channel] = controller;
-  const timeout = setTimeout(() => controller.abort('timeout'), path.includes('freethrow') ? 60000 : 45000);
+  const timeout = setTimeout(() => controller.abort('timeout'), deployment.mode === 'pages' ? 90000 : (path.includes('freethrow') ? 60000 : 45000));
   try {
     const response = await fetch(apiUrl(path), { ...options, signal: controller.signal, headers: { Accept: 'application/json', ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers } });
     const data = await response.json().catch(() => ({}));
@@ -455,7 +462,7 @@ async function loadFreeThrows() {
     const result = await api(`/player/freethrow?player_id=${encodeURIComponent(player.id)}&season=${encodeURIComponent(season)}`, {}, 'freethrow');
     if (sequence !== state.ftSequence || Number(state.player?.id) !== Number(player.id) || state.season !== season) return;
     $('ft-value').textContent = percentage(result.ft_pct);
-    $('ft-detail').textContent = `${format.format(result.ftm ?? 0)} made / ${format.format(result.fta ?? 0)} attempts · ${season} NBA historical statistics. Separate from the model.${result.provenance?.stale ? ' Using stale cached data.' : ''}`;
+    $('ft-detail').textContent = `${format.format(result.ftm ?? 0)} made / ${format.format(result.fta ?? 0)} attempts · ${season} NBA historical statistics. Separate from the model.${dataSnapshotNote(result.provenance)}`;
   } catch (error) {
     if (error.name === 'AbortError' || sequence !== state.ftSequence) return;
     $('ft-detail').textContent = `Historical statistics unavailable: ${error.message}`;
@@ -536,7 +543,7 @@ async function loadShotChart() {
     if (Number(result.player_id) !== Number(player.id) || result.season !== season) throw new Error('Shot data does not match the selected player and season.');
     state.shotChart = result; renderShootingStats();
     const excluded = Object.values(result.excluded).reduce((total, count) => total + count, 0);
-    $('shot-data-status').textContent = `${player.name} · ${season}: ${format.format(result.plotted.attempts)} of ${format.format(result.overall.attempts)} recorded attempts plotted. Red shows shot density.${result.provenance?.stale ? ' Using stale cached NBA data.' : ''}${excluded ? ` ${excluded} invalid, duplicate, or conflicting records excluded.` : ''}`;
+    $('shot-data-status').textContent = `${player.name} · ${season}: ${format.format(result.plotted.attempts)} of ${format.format(result.overall.attempts)} recorded attempts plotted. Red shows shot density.${dataSnapshotNote(result.provenance)}${excluded ? ` ${excluded} invalid, duplicate, or conflicting records excluded.` : ''}`;
     if ($('heatmap-toggle').checked) drawHeatmap(result);
   } catch (error) {
     if (error.name === 'AbortError' || generation !== state.generation || sequence !== state.heatmapSequence) return;

@@ -35,7 +35,7 @@ python -m pip install -r requirements.txt
 python phase3_api.py
 ```
 
-Four evaluated 2023–24 models are included as immutable bundles in `models/`:
+32 evaluated player-season models are included as immutable bundles in `models/`, including these four 2023–24 references:
 
 | Player | NBA ID | Usable historical shots |
 | --- | ---: | ---: |
@@ -44,7 +44,7 @@ Four evaluated 2023–24 models are included as immutable bundles in `models/`:
 | Nikola Jokić | 203999 | 1,403 |
 | Luka Dončić | 1629029 | 1,647 |
 
-These saved models support predictions without a new NBA request. Their individual held-out evaluations and limitations appear in the dashboard. New season discovery, missing models, and historical free-throw totals require NBA access or an eligible cache. Newly prepared bundles remain local by default.
+These saved models support predictions without a new NBA request. Their individual held-out evaluations and limitations appear in the dashboard. Matching public NBA shot and career snapshots are included in `reference_data/` for hosting. New season discovery, missing models, and historical free-throw totals require NBA access or an eligible snapshot/cache. Newly prepared bundles remain local by default.
 
 To create a separate, explicitly synthetic offline demo:
 
@@ -159,7 +159,11 @@ An existing validated bundle returns `status: "done"`, its `model_id`, and `job_
 
 The repository includes a `render.yaml` Blueprint for a **free** Render Python web service. It installs the CPU-only XGBoost runtime, starts one API worker on Render's assigned port, allows the Pages origin, and generates a private training key on Render. Deploy this Blueprint from your Render account, then set the resulting HTTPS service URL as `NBA_API_URL` in GitHub Actions variables and rerun the Pages workflow. The Render URL also serves the complete dashboard directly.
 
-The included evaluated models remain available from the Git checkout. Render's free filesystem is temporary: newly prepared models and NBA caches are lost on restart or idle spin-down. Additional model preparation uses the generated server key through Advanced controls; never publish that key in Pages configuration. Public prediction and historical-statistics endpoints do not require the training key. Upstream NBA access and free-instance resource limits still need checking during deployment.
+The live dashboard is at https://modeldog8197.github.io/NBA-API/ and the Python service is at https://nba-api-modeldog8197.onrender.com. Render's free instance can take about a minute to wake after inactivity.
+
+NBA Stats requests timed out from Render during deployment. The Blueprint therefore uses `NBA_SNAPSHOT_ONLY=true` and `NBA_CACHE_DIR=reference_data`: public historical data is served from 46 saved NBA responses matching the 32 evaluated player-season models. The dashboard labels the snapshot date; these are not live feeds. Missing snapshots fail immediately with a clear unavailable message. Local operation still fetches and caches NBA data normally. To publish additional data, prepare the models locally, run `python -m scripts.export_hosted_snapshots`, and explicitly commit the verified model bundles and matching snapshots. The export checks every model bundle and compares each shot snapshot's digest with the model's recorded NBA source.
+
+The included evaluated models and snapshots remain available from the Git checkout. Render's free filesystem is temporary: newly prepared models are lost on restart or idle spin-down unless committed. Additional model preparation uses the generated server key through Advanced controls and requires an available snapshot on this host; never publish that key in Pages configuration. Public prediction and historical-statistics endpoints do not require the training key.
 
 GitHub Pages publishes the actual dashboard using `.github/workflows/pages.yml`, rather than building the repository README with Jekyll. The deployment packages only `index.html`, the dashboard assets, and public runtime configuration. Asset and home links work under `/NBA-API/`.
 

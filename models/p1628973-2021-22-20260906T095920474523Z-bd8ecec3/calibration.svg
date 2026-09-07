@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="580" viewBox="0 0 800 580" role="img" aria-label="Final test calibration plot">
+<rect width="800" height="580" fill="white"/>
+<g font-family="sans-serif" fill="#0f172a">
+<text x="60" y="35" font-size="22">Final-test probability calibration</text>
+<text x="60" y="58" font-size="13">Held-out later games; each point is a populated probability bin</text>
+<path d="M70 480H490 M70 480V80" fill="none" stroke="#334155"/>
+<path d="M70 480L490 80" stroke="#94a3b8" stroke-dasharray="5 5"/>
+<text x="70.0" y="503" text-anchor="middle" font-size="12">0.0</text>
+<text x="55" y="484.0" text-anchor="end" font-size="12">0.0</text>
+<text x="154.0" y="503" text-anchor="middle" font-size="12">0.2</text>
+<text x="55" y="404.0" text-anchor="end" font-size="12">0.2</text>
+<text x="238.0" y="503" text-anchor="middle" font-size="12">0.4</text>
+<text x="55" y="324.0" text-anchor="end" font-size="12">0.4</text>
+<text x="322.0" y="503" text-anchor="middle" font-size="12">0.6</text>
+<text x="55" y="244.0" text-anchor="end" font-size="12">0.6</text>
+<text x="406.0" y="503" text-anchor="middle" font-size="12">0.8</text>
+<text x="55" y="164.0" text-anchor="end" font-size="12">0.8</text>
+<text x="490.0" y="503" text-anchor="middle" font-size="12">1.0</text>
+<text x="55" y="84.0" text-anchor="end" font-size="12">1.0</text>
+<polyline points="279.65,280.92" stroke="#64748b" fill="none" stroke-width="2"/>
+<circle cx="279.65" cy="280.92" r="4" fill="#64748b"><title>n=217</title></circle>
+<rect x="520" y="100" width="10" height="10" fill="#64748b"/>
+<text x="538" y="110" font-size="12">constant baseline (selected)</text>
+<polyline points="101.02,391.11 133.46,248.42 175.20,320.00 217.55,274.87 261.75,259.31 297.72,322.42 341.87,306.67 382.66,201.74 421.99,400.00 462.10,120.00" stroke="#ea580c" fill="none" stroke-width="2"/>
+<circle cx="101.02" cy="391.11" r="4" fill="#ea580c"><title>n=9</title></circle>
+<circle cx="133.46" cy="248.42" r="4" fill="#ea580c"><title>n=19</title></circle>
+<circle cx="175.20" cy="320.00" r="4" fill="#ea580c"><title>n=15</title></circle>
+<circle cx="217.55" cy="274.87" r="4" fill="#ea580c"><title>n=39</title></circle>
+<circle cx="261.75" cy="259.31" r="4" fill="#ea580c"><title>n=29</title></circle>
+<circle cx="297.72" cy="322.42" r="4" fill="#ea580c"><title>n=33</title></circle>
+<circle cx="341.87" cy="306.67" r="4" fill="#ea580c"><title>n=30</title></circle>
+<circle cx="382.66" cy="201.74" r="4" fill="#ea580c"><title>n=23</title></circle>
+<circle cx="421.99" cy="400.00" r="4" fill="#ea580c"><title>n=10</title></circle>
+<circle cx="462.10" cy="120.00" r="4" fill="#ea580c"><title>n=10</title></circle>
+<rect x="520" y="135" width="10" height="10" fill="#ea580c"/>
+<text x="538" y="145" font-size="12">original xgboost</text>
+<polyline points="233.96,480.00 262.85,291.11 301.90,284.80 334.11,284.44 368.55,80.00" stroke="#a855f7" fill="none" stroke-width="2"/>
+<circle cx="233.96" cy="480.00" r="4" fill="#a855f7"><title>n=3</title></circle>
+<circle cx="262.85" cy="291.11" r="4" fill="#a855f7"><title>n=36</title></circle>
+<circle cx="301.90" cy="284.80" r="4" fill="#a855f7"><title>n=125</title></circle>
+<circle cx="334.11" cy="284.44" r="4" fill="#a855f7"><title>n=45</title></circle>
+<circle cx="368.55" cy="80.00" r="4" fill="#a855f7"><title>n=8</title></circle>
+<rect x="520" y="170" width="10" height="10" fill="#a855f7"/>
+<text x="538" y="180" font-size="12">original sigmoid</text>
+<polyline points="178.20,368.89 217.72,307.03 257.93,293.33 300.19,267.10 344.08,260.00 384.41,233.85 420.01,80.00" stroke="#0891b2" fill="none" stroke-width="2"/>
+<circle cx="178.20" cy="368.89" r="4" fill="#0891b2"><title>n=18</title></circle>
+<circle cx="217.72" cy="307.03" r="4" fill="#0891b2"><title>n=37</title></circle>
+<circle cx="257.93" cy="293.33" r="4" fill="#0891b2"><title>n=60</title></circle>
+<circle cx="300.19" cy="267.10" r="4" fill="#0891b2"><title>n=62</title></circle>
+<circle cx="344.08" cy="260.00" r="4" fill="#0891b2"><title>n=20</title></circle>
+<circle cx="384.41" cy="233.85" r="4" fill="#0891b2"><title>n=13</title></circle>
+<circle cx="420.01" cy="80.00" r="4" fill="#0891b2"><title>n=7</title></circle>
+<rect x="520" y="205" width="10" height="10" fill="#0891b2"/>
+<text x="538" y="215" font-size="12">candidate xgboost</text>
+<polyline points="276.78,356.92 302.61,290.40 333.45,196.13" stroke="#059669" fill="none" stroke-width="2"/>
+<circle cx="276.78" cy="356.92" r="4" fill="#059669"><title>n=13</title></circle>
+<circle cx="302.61" cy="290.40" r="4" fill="#059669"><title>n=173</title></circle>
+<circle cx="333.45" cy="196.13" r="4" fill="#059669"><title>n=31</title></circle>
+<rect x="520" y="240" width="10" height="10" fill="#059669"/>
+<text x="538" y="250" font-size="12">candidate sigmoid</text>
+<text x="280" y="537" text-anchor="middle" font-size="15">Mean predicted make probability</text>
+<text transform="translate(20 280) rotate(-90)" text-anchor="middle" font-size="15">Observed make fraction</text>
+<text x="60" y="566" font-size="12">No error bands: uncertainty intervals have not been evaluated.</text></g></svg>

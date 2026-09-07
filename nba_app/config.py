@@ -42,6 +42,7 @@ class Settings:
     cors_origins: tuple[str, ...] = ()
     allow_stale_cache: bool = True
     local_player_models: bool = False
+    snapshot_only: bool = False
 
     def __post_init__(self):
         object.__setattr__(self, "model_dir", Path(self.model_dir))
@@ -70,4 +71,5 @@ class Settings:
             cors_origins=tuple(v.strip() for v in os.getenv("NBA_CORS_ORIGINS", "").split(",") if v.strip()),
             allow_stale_cache=_boolean("NBA_ALLOW_STALE_CACHE", True),
             local_player_models=_boolean("NBA_LOCAL_PLAYER_MODELS", local_default),
+            snapshot_only=_boolean("NBA_SNAPSHOT_ONLY", False),
         )
