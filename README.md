@@ -1,5 +1,7 @@
 # NBA API
 
+Visit the model - https://modeldog8197.github.io/NBA-API/
+
 A basketball shot probability dashboard and FastAPI service built with Python and XGBoost. Search the NBA player catalog, choose one of that player's recorded seasons, and explore shot locations with make probability, expected points, a red shot-density map, recorded zone/overall FG%, and checked feature explanations. The local dashboard prepares missing player-season models from actual NBA records. Every prediction identifies its player, season, and immutable model version.
 
 This project builds on [basketball-short-predictor](https://github.com/Modeldog8197/basketball-short-predictor). Its original Git history is preserved. See the [source audit and implementation plan](docs/AUDIT.md) and [evaluation methodology and evidence](docs/EVALUATION.md).
