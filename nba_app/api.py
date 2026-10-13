@@ -25,6 +25,7 @@ from .models import MODEL_ID_RE, ModelStore, ModelValidationError
 from .training import train_bundle
 from .preparation import ModelPreparationService, PreparationBusyError
 from .shot_chart import summarize_shots
+from .player_data import router as player_data_router
 
 log = logging.getLogger(__name__)
 
@@ -204,6 +205,7 @@ def create_app(settings: Settings | None = None, data_client=None, store=None) -
         "Basketball shot probabilities with immutable player-season model versions. "
         "Coordinates use tenths of a foot, with the hoop at the origin."
     ))
+    app.include_router(player_data_router)
     app.state.settings, app.state.store, app.state.data_client = config, registry, client
     app.state.preparation = preparation
     app.state.jobs = {}
