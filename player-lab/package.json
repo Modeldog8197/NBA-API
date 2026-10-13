@@ -1,0 +1,10 @@
+{
+  "name": "nba-player-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-pages.mjs",
+    "test": "node scripts/restore-data.mjs && node --test tests/*.test.mjs",
+    "build:pages": "node scripts/build-pages.mjs"
+  }
+}

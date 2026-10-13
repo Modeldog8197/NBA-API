@@ -1,0 +1,12 @@
+upstream
+worker/
+node_modules/
+dist/
+.env*
+data/*.json
+shot-data/processed/catalog.json
+shot-data/processed/registry.json
+shot-data/processed/coverage.json
+shot-data/identity-map.json
+shot-data/raw/
+__pycache__/

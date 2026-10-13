@@ -1,11 +1,12 @@
-name: Deploy dashboard to Pages
+name: Deploy Player Lab to Pages
 
 on:
   push:
     branches: [main]
     paths:
+      - 'player-lab/**'
       - 'static/**'
-      - 'scripts/build_pages.py'
+      - 'models/**/metadata.json'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -24,14 +25,18 @@ jobs:
       pages: read
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.12'
+          node-version: '22'
       - uses: actions/configure-pages@v5
-      - name: Package the dashboard
+      - name: Validate archived player and shot data
+        working-directory: player-lab
+        run: npm test
+      - name: Package the complete Player Lab
+        working-directory: player-lab
         env:
           NBA_API_URL: ${{ vars.NBA_API_URL }}
-        run: python scripts/build_pages.py
+        run: npm run build:pages
       - uses: actions/upload-pages-artifact@v4
         with:
           path: artifacts/pages
@@ -45,6 +50,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Publish dashboard
+      - name: Publish Player Lab
         id: deployment
         uses: actions/deploy-pages@v4

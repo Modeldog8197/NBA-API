@@ -1,5 +1,14 @@
 # NBA API
 
+## Player Lab website
+
+**Live site: [NBA Player Lab](https://modeldog8197.github.io/NBA-API/)**
+
+**[Shot analysis](https://modeldog8197.github.io/NBA-API/shot-lab/)** — complete ten-season archive, 2,111,521 recorded shots, 1,477 players and 5,492 player-seasons.
+
+The new [Player Lab](player-lab/README.md) adds player search and filters, historical stats, responsive charts, game logs, advanced metrics, expanded shot heatmaps and spatial estimates. The original Python API and saved models below remain supported. The Pages deployment now builds Player Lab; its historical features run from published data, while public ESPN feeds provide live scores and the existing Render service handles original model inference. No client secrets are required.
+
+
 Visit the model - https://modeldog8197.github.io/NBA-API/
 
 A basketball shot probability dashboard and FastAPI service built with Python and XGBoost. Search the NBA player catalog, choose one of that player's recorded seasons, and explore shot locations with make probability, expected points, a red shot-density map, recorded zone/overall FG%, and checked feature explanations. The local dashboard prepares missing player-season models from actual NBA records. Every prediction identifies its player, season, and immutable model version.
@@ -167,11 +176,11 @@ NBA Stats requests timed out from Render during deployment. The Blueprint theref
 
 The included evaluated models and snapshots remain available from the Git checkout. Render's free filesystem is temporary: newly prepared models are lost on restart or idle spin-down unless committed. Additional model preparation uses the generated server key through Advanced controls and requires an available snapshot on this host; never publish that key in Pages configuration. Public prediction and historical-statistics endpoints do not require the training key.
 
-GitHub Pages publishes the actual dashboard using `.github/workflows/pages.yml`, rather than building the repository README with Jekyll. The deployment packages only `index.html`, the dashboard assets, and public runtime configuration. Asset and home links work under `/NBA-API/`.
+GitHub Pages publishes the complete [Player Lab](https://modeldog8197.github.io/NBA-API/) using `.github/workflows/pages.yml`. It validates and builds the static player explorer and expanded shot analysis from `player-lab/`, retaining all original source and models. Asset and home links work under `/NBA-API/`.
 
-Pages cannot run the Python API. For public predictions and player data, host the FastAPI application separately and configure the repository Actions variable `NBA_API_URL` with its public HTTPS base URL. Set `NBA_CORS_ORIGINS=https://modeldog8197.github.io` on that backend, then rerun **Deploy dashboard to Pages**. Requests, model records, and API documentation links use that configured server. Do not put secrets in `NBA_API_URL`; the existing protected training key is entered separately when required.
+Historical player data, heatmaps and new spatial predictions use committed archives and run without a separate server. Live scores and game logs use public ESPN feeds. Original XGBoost/constant model predictions use the existing public Render API, with explicit loading/error states. `NBA_API_URL` can override that public HTTPS URL for a build; it must not contain secrets. The public backend must allow `https://modeldog8197.github.io` through CORS. Pages disables training.
 
-Without a public backend URL, the published dashboard explicitly shows that its live service is not connected, and does not send failing requests to GitHub Pages or redirect visitors to their own localhost. The local `python phase3_api.py` workflow continues to use the same-origin API automatically.
+See [Player Lab build, sources and validation](player-lab/README.md) for coverage discrepancies, refresh behavior and local build instructions. The original `scripts/build_pages.py` is retained for users who want to package only the earlier shot dashboard. Local `python phase3_api.py` continues serving the original application.
 
 ## Configuration and hosted retraining
 
