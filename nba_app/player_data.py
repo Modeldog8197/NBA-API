@@ -222,7 +222,7 @@ def list_seasons():
 
 @router.get("/players/{player_id}/games")
 def player_games(
-    player_id: int, season: str = Query(..., pattern=r"^\\d{4}-\\d{2}$"),
+    player_id: int, season: str = Query(..., pattern=r"^\d{4}-\d{2}$"),
     season_type: str = Query(default="Regular Season", pattern="^(Regular Season|Playoffs)$"),
     limit: int = Query(default=500, ge=1, le=2000),
 ):
@@ -237,7 +237,7 @@ def player_games(
 
 
 @router.get("/players/{player_id}/stats")
-def player_stats(player_id: int, season: str | None = Query(default=None, pattern=r"^\\d{4}-\\d{2}$")):
+def player_stats(player_id: int, season: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}$")):
     with connect() as db:
         if season:
             rows = db.execute("SELECT * FROM season_stats WHERE player_id=? AND season=? ORDER BY season_type,team_id", (player_id, season)).fetchall()
@@ -247,7 +247,7 @@ def player_stats(player_id: int, season: str | None = Query(default=None, patter
 
 
 @router.get("/players/{player_id}/advanced")
-def player_advanced(player_id: int, season: str = Query(..., pattern=r"^\\d{4}-\\d{2}$")):
+def player_advanced(player_id: int, season: str = Query(..., pattern=r"^\d{4}-\d{2}$")):
     with connect() as db:
         rows = db.execute(
             "SELECT * FROM season_stats WHERE player_id=? AND season=? AND season_type='Regular Season'",
