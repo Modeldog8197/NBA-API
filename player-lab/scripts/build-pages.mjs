@@ -21,7 +21,7 @@ let home=read('web/index.html').replaceAll('href="/','href="'+base).replaceAll('
 home=home.replace('<script src="'+base+'app.js"',`<script src="${base}static/runtime-config.js" defer></script><script src="${base}pages-runtime.js" data-base="${base}" defer></script><script src="${base}app.js"`);
 write('index.html',home);
 let shot=read('web/shot.html').replaceAll('"./static/','"'+base+'static/').replaceAll('href="./"','href="'+base+'"').replaceAll('href="/docs" data-api-path="/docs"','href="'+base+'#method"').replaceAll('API docs','Data methods').replaceAll('API documentation','Data methods').replace('<nav aria-label="Main navigation">','<nav aria-label="Main navigation"><a href="'+base+'">Player explorer</a>');
-shot=shot.replace('<script src="'+base+'static/app.js"',`<script src="${base}pages-runtime.js" data-base="${base}" defer></script><script src="${base}static/app.js"`);
+shot=shot.replace('<script src="'+base+'static/app.js',`<script src="${base}pages-runtime.js" data-base="${base}" defer></script><script src="${base}static/app.js`);
 write('shot-lab/index.html',shot);
 // Metadata downloads remain useful outside the fetch adapter (e.g. Open record).
 const legacy=fs.readdirSync(path.join(upstream,'models')).filter(n=>fs.existsSync(path.join(upstream,'models',n,'metadata.json'))).map(n=>JSON.parse(fs.readFileSync(path.join(upstream,'models',n,'metadata.json'))));
